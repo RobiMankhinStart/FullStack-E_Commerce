@@ -6,6 +6,7 @@ const productRoute = require("./product");
 const cartRoute = require(".//cart");
 const orderRoute = require("./order");
 const { authMiddleware } = require("../middleware/authMiddleware");
+
 route.get("/", (req, res) => {
   res.send("server route");
 });

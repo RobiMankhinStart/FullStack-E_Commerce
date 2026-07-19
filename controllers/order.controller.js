@@ -49,15 +49,28 @@ const checkOut = async (req, res) => {
     if (paymentType === "Stripe") {
       // creating stripesession
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: cartData.items.map((item) => ({
-          price_data: {
-            currency: "bdt",
-            product_data: { name: "Order Items" },
-            unit_amount: Math.round(totalPrice * 100),
+        // payment_method_types: ["card"],
+        // line_items: cartData.items.map((item) => ({
+        //   price_data: {
+        //     currency: "bdt",
+        //     product_data: { name: "Order Items" },
+        //     unit_amount: Math.round(totalPrice * 100),
+        //   },
+        //   quantity: 1,
+        // })),
+        line_items: [
+          {
+            price_data: {
+              currency: "bdt",
+              product_data: {
+                name: "Your Order Total",
+                description: `Includes delivery charge of ৳${deliveryCharge}`,
+              },
+              unit_amount: Math.round(totalPrice * 100), // Correct calculation in cents/poisha
+            },
+            quantity: 1,
           },
-          quantity: 1,
-        })),
+        ],
         mode: "payment",
         success_url: "http://localhost:3000/success",
         cancel_url: "http://localhost:3000/cancel",

@@ -6,6 +6,14 @@ const dbConfig = require("./dbConfig");
 const route = require("./router");
 var cookieParser = require("cookie-parser");
 const cloudinaryConfig = require("./services/CloudinaryConfig");
+const { stripeWebhook } = require("./controllers/webhook.controler");
+
+// 1. STRIPE WEBHOOK ROUTE (Must be defined before express.json)
+app.post(
+  "/api/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook,
+);
 
 // for nested values like nested variants
 app.use(express.urlencoded({ extended: true }));
@@ -16,11 +24,7 @@ app.use(cors());
 dbConfig();
 cloudinaryConfig();
 app.use(route);
-// const generateOTP = () => {
-//   return Math.floor(1000 + Math.random() * 9000);
-// };
 
-// console.log(generateOTP());
 app.listen(8000, () => {
   console.log("Server is running on http://localhost:8000");
 });
