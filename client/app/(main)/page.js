@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import React from "react";
 import Image from "next/image";
+import Button from "../components/commonUI/Button";
 import Link from "next/link";
 import HeroSlider from "../components/main/HeroSlider";
 // import { apiClient } from "@/app/lib/apiClient";
@@ -28,9 +29,17 @@ const HomePage = async () => {
               Shop by Intent
             </h2>
           </div>
-          <button className="text-sm font-bold flex items-center gap-2 hover:text-indigo-600 transition-colors">
+          {/* <button className="text-sm font-bold flex items-center gap-2 hover:text-indigo-600 transition-colors">
             All Categories <span>→</span>
-          </button>
+          </button> */}
+          <Button
+            variant="ghost"
+            size="sm"
+            rightIcon={<span>→</span>}
+            className="font-bold hover:text-indigo-600 hover:bg-transparent"
+          >
+            All Categories
+          </Button>
         </div>
 
         {/* MAIN parent container controls the structural bounding box heights safely */}
