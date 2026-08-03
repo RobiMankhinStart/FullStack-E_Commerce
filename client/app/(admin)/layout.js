@@ -1,7 +1,9 @@
-import React from "react";
-
-const AdminLayout = ({ children }) => {
-  return <div>{children}</div>;
-};
-
-export default AdminLayout;
+import AdminShell from "@/app/components/admin/AdminShell";
+import AdminProvider from "./services/AdminProvider";
+export default function AdminLayout({ children }) {
+  return (
+    <AdminProvider>
+      <AdminShell>{children}</AdminShell>
+    </AdminProvider>
+  );
+}
