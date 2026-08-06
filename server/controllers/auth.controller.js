@@ -21,6 +21,7 @@ const signUp = async (req, res) => {
   try {
     const { fullname, email, password, address, phone } = req.body;
 
+    if (!fullname) return sendResponse(res, 400, "Name is required");
     if (!email) return sendResponse(res, 400, "Email is required");
     // res.status(400).send({ message: "Email is required" });
     if (!isValidEmail(email)) return sendResponse(res, 400, "Invalid email");

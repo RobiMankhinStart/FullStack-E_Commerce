@@ -11,6 +11,8 @@ const Input = React.forwardRef(function Input(
     placeholder,
     id,
     rows = 4,
+    leftIcon = null,
+    rightIcon = null,
     as: Component = "input",
     ...props
   },
@@ -33,6 +35,8 @@ const Input = React.forwardRef(function Input(
   const inputClasses = [
     baseClasses,
     isTextarea ? "rounded-2xl bg-slate-50" : "rounded-xl bg-white",
+    leftIcon ? "pl-11" : "",
+    rightIcon ? "pr-11" : "",
     error ? "border-rose-400 focus:border-rose-500 focus:ring-rose-100" : "",
     className,
   ]
@@ -58,17 +62,31 @@ const Input = React.forwardRef(function Input(
         </label>
       )}
 
-      <InputElement
-        ref={ref}
-        id={inputId}
-        type={isTextarea ? undefined : type}
-        placeholder={placeholder}
-        rows={isTextarea ? rows : undefined}
-        aria-invalid={Boolean(error)}
-        aria-describedby={errorId}
-        className={inputClasses}
-        {...props}
-      />
+      <div className="relative">
+        {leftIcon ? (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            {leftIcon}
+          </span>
+        ) : null}
+
+        <InputElement
+          ref={ref}
+          id={inputId}
+          type={isTextarea ? undefined : type}
+          placeholder={placeholder}
+          rows={isTextarea ? rows : undefined}
+          aria-invalid={Boolean(error)}
+          aria-describedby={errorId}
+          className={inputClasses}
+          {...props}
+        />
+
+        {rightIcon ? (
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+            {rightIcon}
+          </span>
+        ) : null}
+      </div>
 
       {error && (
         <p id={errorId} className="mt-2 text-sm text-rose-500">

@@ -2,23 +2,25 @@ import React from "react";
 
 const variantClasses = {
   primary:
-    "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm shadow-indigo-100",
+    "border border-indigo-600 bg-indigo-600 text-white shadow-sm shadow-indigo-100 hover:bg-indigo-700 hover:shadow-md focus:ring-indigo-500",
   secondary:
-    "bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-400",
+    "border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-400",
   outline:
-    "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus:ring-slate-400",
+    "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-400",
   ghost:
-    "bg-transparent text-slate-700 hover:bg-slate-100 focus:ring-slate-400",
-  danger: "bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500",
+    "border border-transparent bg-transparent text-slate-700 hover:bg-slate-100 focus:ring-slate-400",
+  danger:
+    "border border-rose-600 bg-rose-600 text-white shadow-sm shadow-rose-100 hover:bg-rose-700 focus:ring-rose-500",
   success:
-    "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500",
-  light: "bg-white text-slate-900 hover:bg-slate-100 focus:ring-slate-400",
+    "border border-emerald-600 bg-emerald-600 text-white shadow-sm shadow-emerald-100 hover:bg-emerald-700 focus:ring-emerald-500",
+  light:
+    "border border-slate-200 bg-white text-slate-900 hover:bg-slate-100 focus:ring-slate-400",
 };
 
 const sizeClasses = {
-  sm: "px-3 py-2 text-sm",
-  md: "px-4 py-3 text-sm",
-  lg: "px-6 py-3.5 text-base",
+  sm: "min-h-10 px-3 py-2 text-sm",
+  md: "min-h-11 px-4 py-3 text-sm",
+  lg: "min-h-12 px-6 py-3.5 text-base",
   icon: "h-10 w-10 p-0",
 };
 
@@ -42,6 +44,8 @@ const Button = React.forwardRef(function Button(
     disabled = false,
     leftIcon = null,
     rightIcon = null,
+    leftIconClassName = "",
+    rightIconClassName = "",
     type = "button",
     as: Component = "button", // Defaults to standard HTML button
     ...props
@@ -50,7 +54,7 @@ const Button = React.forwardRef(function Button(
 ) {
   // Base styles applied to every button
   const baseClasses =
-    "inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 select-none";
+    "group inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold leading-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 select-none active:translate-y-[1px]";
 
   // Merge classes safely using simple JavaScript array filtering
   const classes = [
@@ -63,6 +67,22 @@ const Button = React.forwardRef(function Button(
   ]
     .filter(Boolean)
     .join(" ");
+
+  const renderIcon = (icon, extraClassName = "") => {
+    if (!icon) return null;
+
+    return React.isValidElement(icon)
+      ? React.cloneElement(icon, {
+          className: [
+            icon.props.className,
+            "transition-transform duration-200 group-hover:translate-x-1",
+            extraClassName,
+          ]
+            .filter(Boolean)
+            .join(" "),
+        })
+      : icon;
+  };
 
   return (
     <Component
@@ -78,10 +98,10 @@ const Button = React.forwardRef(function Button(
           aria-hidden="true"
         />
       ) : (
-        leftIcon
+        renderIcon(leftIcon, leftIconClassName)
       )}
       {children && <span>{children}</span>}
-      {!loading && rightIcon}
+      {!loading && renderIcon(rightIcon, rightIconClassName)}
     </Component>
   );
 });
