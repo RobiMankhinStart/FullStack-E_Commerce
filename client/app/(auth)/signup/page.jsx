@@ -43,22 +43,32 @@ export default function SignUpPage() {
 
       if (!response.ok) {
         const message = data.message || "Signup failed";
+        const normalizedMessage = message.toLowerCase();
 
-        if (message === "Name is required") {
+        if (
+          normalizedMessage.includes("name") ||
+          normalizedMessage.includes("fullname")
+        ) {
           setErrors((prev) => ({
             ...prev,
             nameError: message,
           }));
         }
 
-        if (message === "Email is required") {
+        if (
+          normalizedMessage.includes("email") ||
+          normalizedMessage.includes("already exists")
+        ) {
           setErrors((prev) => ({
             ...prev,
             emailError: message,
           }));
         }
 
-        if (message === "Password is required") {
+        if (
+          normalizedMessage.includes("password") ||
+          normalizedMessage.includes("minimum 8")
+        ) {
           setErrors((prev) => ({
             ...prev,
             passwordError: message,
@@ -70,7 +80,7 @@ export default function SignUpPage() {
         return;
       }
 
-      toast.success("Signup successful. Redirecting to verification...");
+      toast.success("Signup almost completed. Redirecting to verification...");
       setLoading(false);
       setTimeout(() => {
         router.push("/verifyotp");

@@ -37,7 +37,9 @@ const Input = React.forwardRef(function Input(
     isTextarea ? "rounded-2xl bg-slate-50" : "rounded-xl bg-white",
     leftIcon ? "pl-11" : "",
     rightIcon ? "pr-11" : "",
-    error ? "border-rose-400 focus:border-rose-500 focus:ring-rose-100" : "",
+    error
+      ? "!border-red-400 !border-2 focus:!border-red-500 focus:!ring-rose-100"
+      : "",
     className,
   ]
     .filter(Boolean)
