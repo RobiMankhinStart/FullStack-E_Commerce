@@ -58,7 +58,7 @@ const signUp = async (req, res) => {
     await sentVerificationEmail({
       email: email,
       subject: "Email verification",
-      otp: OTP,
+      parameter: OTP,
       temp: emailVerifyTemp,
     });
 
@@ -121,7 +121,7 @@ const resendOtp = async (req, res) => {
 
     const otp = generateOTP();
     user.otp = otp;
-    user.otpExpires = Date.now() + 2 * 60 * 1000;
+    user.otpExpires = Date.now() + 5 * 60 * 1000;
 
     await user.save();
     await sentVerificationEmail({

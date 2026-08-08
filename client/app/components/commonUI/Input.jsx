@@ -13,6 +13,8 @@ const Input = React.forwardRef(function Input(
     rows = 4,
     leftIcon = null,
     rightIcon = null,
+    rightIconAction = null,
+    rightIconClassName = "",
     as: Component = "input",
     ...props
   },
@@ -84,9 +86,14 @@ const Input = React.forwardRef(function Input(
         />
 
         {rightIcon ? (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <button
+            type="button"
+            onClick={rightIconAction}
+            className={`absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600 ${rightIconClassName}`.trim()}
+            aria-label="Toggle visibility"
+          >
             {rightIcon}
-          </span>
+          </button>
         ) : null}
       </div>
 

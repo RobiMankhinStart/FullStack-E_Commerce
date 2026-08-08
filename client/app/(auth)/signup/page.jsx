@@ -1,7 +1,14 @@
 "use client";
 
 import { toast } from "sonner";
-import { FiArrowRight, FiEye, FiLock, FiMail, FiUser } from "react-icons/fi";
+import {
+  FiArrowRight,
+  FiEye,
+  FiEyeOff,
+  FiLock,
+  FiMail,
+  FiUser,
+} from "react-icons/fi";
 import Button from "@/app/components/commonUI/Button";
 import Input from "@/app/components/commonUI/Input";
 import AuthShell from "@/app/(auth)/components/AuthShell";
@@ -11,6 +18,7 @@ import { useRouter } from "next/navigation";
 export default function SignUpPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [pasword, setPassword] = useState(true);
   const [errors, setErrors] = useState({
     nameError: "",
     emailError: "",
@@ -83,8 +91,8 @@ export default function SignUpPage() {
       toast.success("Signup almost completed. Redirecting to verification...");
       setLoading(false);
       setTimeout(() => {
-        router.push("/verifyotp");
-      }, 2400);
+        router.push(`/verifyotp?email=${encodeURIComponent(userData.email)}`);
+      }, 1200);
     } catch (error) {
       console.log(error.message);
 
@@ -128,10 +136,17 @@ export default function SignUpPage() {
         />
         <Input
           label="Password"
-          type="password"
+          type={pasword ? "password" : "text"}
           placeholder="Create a strong password"
           leftIcon={<FiLock size={16} />}
-          rightIcon={<FiEye size={16} />}
+          rightIcon={
+            pasword ? (
+              <FiEye className="cursor-pointer" size={16} />
+            ) : (
+              <FiEyeOff className="cursor-pointer" size={16} />
+            )
+          }
+          rightIconAction={() => setPassword((prev) => !prev)}
           value={userData.password}
           onChange={(e) => {
             setUserData((prev) => ({ ...prev, password: e.target.value }));
