@@ -18,11 +18,16 @@ app.post(
 // for nested values like nested variants
 app.use(express.urlencoded({ extended: true }));
 
-app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    credentials: true,
+  }),
+);
 dbConfig();
 cloudinaryConfig();
+app.use(express.json());
 app.use(route);
 
 app.listen(8000, () => {

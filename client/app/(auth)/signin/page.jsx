@@ -31,6 +31,7 @@ export default function SignInPage() {
     try {
       const res = await fetch("http://localhost:8000/auth/signin", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
@@ -49,7 +50,7 @@ export default function SignInPage() {
           }));
         }
         if (
-          updatedMessage.includes("Password ") ||
+          updatedMessage.includes("Password") ||
           updatedMessage.includes("Wrong")
         ) {
           setErrors((prev) => ({
