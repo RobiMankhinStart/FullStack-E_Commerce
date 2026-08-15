@@ -165,7 +165,7 @@ const signIn = async (req, res) => {
     // console.log("acc_Tok :", acc_token);
     // console.log("REF_Tok :", REF_token);
     res.cookie("X-AS-Token", acc_token, {
-      maxAge: 3600000, // 1 hour
+      maxAge: 172800000, // 48 hours
       httpOnly: false, // Security: prevent JS access
       secure: false, // Security: HTTPS only
       // sameSite: "lax", // CSRF protection

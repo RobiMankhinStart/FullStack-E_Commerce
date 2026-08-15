@@ -1,10 +1,14 @@
 "use client";
 
-import { FiGrid, FiTag } from "react-icons/fi";
+import { FiTag } from "react-icons/fi";
 import Button from "@/app/components/commonUI/Button";
-import { MOCK_CATEGORIES } from "@/app/lib/mockData";
+import { useGetCategoryListQuery } from "../../services/api";
+import Image from "next/image";
 
 export default function CategoriesPage() {
+  const { data } = useGetCategoryListQuery();
+  console.log("category-data:", data);
+  const categories = data?.data || [];
   return (
     <div className="space-y-6">
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
@@ -25,12 +29,20 @@ export default function CategoriesPage() {
       </section>
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {MOCK_CATEGORIES.map((category) => (
+        {categories?.map((category) => (
           <div
             key={category._id}
             className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm"
           >
-            <div className="flex items-center justify-between">
+            <Image
+              src={category.thumbnail}
+              alt={category.title}
+              width={800}
+              height={480}
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              className="h-48 w-full object-cover"
+            />
+            <div className="flex mt-2 items-center justify-between">
               <div className="rounded-2xl bg-indigo-50 p-2 text-indigo-700">
                 <FiTag size={16} />
               </div>
@@ -48,7 +60,6 @@ export default function CategoriesPage() {
                 size="sm"
                 className="flex items-center gap-2"
               >
-                <FiGrid />
                 Edit
               </Button>
               <Button variant="ghost" size="sm">

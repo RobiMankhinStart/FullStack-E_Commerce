@@ -3,7 +3,7 @@ const route = express.Router();
 const authRoute = require("./auth");
 const categoryRoute = require("./category");
 const productRoute = require("./product");
-const cartRoute = require(".//cart");
+const cartRoute = require("./cart");
 const orderRoute = require("./order");
 const { authMiddleware } = require("../middleware/authMiddleware");
 

@@ -1,10 +1,12 @@
 "use client";
+import Link from "next/link";
 
 import Image from "next/image";
 import { FiStar } from "react-icons/fi";
 import Button from "@/app/components/commonUI/Button";
 import { MOCK_PRODUCTS } from "@/app/lib/mockData";
 import { useGetProductListQuery } from "../../services/api";
+import { Plus } from "lucide-react";
 
 export default function ProductsPage() {
   const { data, isLoading, error } = useGetProductListQuery();
@@ -25,7 +27,14 @@ export default function ProductsPage() {
               Showcase your best offers with a polished product experience.
             </p>
           </div>
-          <Button variant="primary">Add product</Button>
+          {/* <Button variant="primary">Add product</Button> */}
+          <Link
+            href="/admin/products/new"
+            className="bg-indigo-600 text-white px-6 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+          >
+            <Plus size={20} />
+            Add Product
+          </Link>
         </div>
       </section>
       {isLoading ? (
