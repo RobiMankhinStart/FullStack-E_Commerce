@@ -11,7 +11,7 @@ const generateAccTok = (user) => {
     { _id: user._id, email: user.email, role: user.role },
 
     process.env.JWT_SEC,
-    { expiresIn: "1h" },
+    { expiresIn: "48h" },
   );
 };
 const generateRefreshTok = (user) => {

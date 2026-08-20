@@ -18,6 +18,7 @@ const variantClasses = {
 };
 
 const sizeClasses = {
+  xs: " px-0.5 text-xs",
   sm: "min-h-10 px-3 py-2 text-sm",
   md: "min-h-11 px-4 py-3 text-sm",
   lg: "min-h-12 px-6 py-3.5 text-base",
@@ -26,6 +27,7 @@ const sizeClasses = {
 
 const roundedClasses = {
   none: "rounded-none",
+  xs: "rounded-sm",
   sm: "rounded-lg",
   md: "rounded-xl",
   lg: "rounded-2xl",

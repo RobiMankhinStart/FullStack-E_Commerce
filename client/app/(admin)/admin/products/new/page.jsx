@@ -8,14 +8,18 @@ import {
   Tag,
   Plus,
   Trash2,
+  Delete,
+  DeleteIcon,
   Layers,
   Percent,
   DollarSign,
+  MessageCircleX,
 } from "lucide-react";
 
 import Button from "@/app/components/commonUI/Button";
 import Input from "@/app/components/commonUI/Input";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function CreateProductPage() {
   const clampNonNegativeNumber = (val) => {
@@ -34,13 +38,13 @@ export default function CreateProductPage() {
     category: "",
     price: "",
     discountPercentage: "",
-    variants: "",
+    variants: [],
     tags: "",
     thumbnail: "",
-    images: "",
+    images: [],
   });
-
-  const [varients, setVarients] = useState([
+  console.log("newProduct=", newProduct);
+  const [variantState, setVariantState] = useState([
     {
       id: crypto.randomUUID(),
       // eslint-disable-next-line react-hooks/purity
@@ -50,37 +54,38 @@ export default function CreateProductPage() {
       stock: "",
     },
   ]);
-  const handleVarientsChange = () => {
-    const updatdvarients = {
+  console.log("variantState=", variantState);
+  const AddNewVarient = () => {
+    const newVariant = {
       id: crypto.randomUUID(),
       sku: `Ecom-${Math.floor(Math.random() * 10000)}`,
-
       color: "",
       size: "",
       stock: "",
     };
-    setVarients((prev) => [...prev, updatdvarients]);
+    const nextVariants = [...variantState, newVariant];
+
+    setVariantState(nextVariants);
+    setNewProduct((prev) => ({ ...prev, variants: nextVariants }));
   };
 
   const deleteVarient = (id) => {
-    console.log("hit");
+    if (variantState.length > 1) {
+      const nextVariants = variantState.filter((variant) => variant.id !== id);
 
-    if (varients.length > 1) {
-      setVarients((prev) => prev.filter((v) => v.id !== id));
-
-      // alternative approach
-      // const newvarient = varients.filter((e) => e.id !== id);
-      // setVarients(newvarient);
+      setVariantState(nextVariants);
+      setNewProduct((prev) => ({ ...prev, variants: nextVariants }));
     }
   };
 
   const varientInputChange = (id, field, value) => {
-    setVarients((prev) =>
-      prev.map((vitem) =>
-        vitem.id == id ? { ...vitem, [field]: value } : vitem,
-      ),
+    const nextVariants = variantState.map((variant) =>
+      variant.id === id ? { ...variant, [field]: value } : variant,
     );
-    // alternative
+
+    setVariantState(nextVariants);
+    setNewProduct((prev) => ({ ...prev, variants: nextVariants }));
+    // alternative of just variantState state update
     // setVarients((prev) => {
     //   prev.map((vitem) => {
     //     if (vitem.id == id) {
@@ -99,8 +104,19 @@ export default function CreateProductPage() {
     // });
     // setVarients(changedvarient);
   };
-  console.log("updated-varients =", varients);
 
+  const handleImagesChange = (e) => {
+    const files = e.target.files[0];
+    const changedImages = [...newProduct.images];
+    changedImages.push(files);
+    setNewProduct((prev) => ({ ...prev, images: changedImages }));
+  };
+
+  // delete images
+  const handleImageDelete = (i) => {
+    const updatedImages = newProduct.images.filter((_, index) => index !== i);
+    setNewProduct((prev) => ({ ...prev, images: updatedImages }));
+  };
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
       <div className="mx-auto max-w-7xl px-4 pt-3 sm:px-6 lg:px-8 ">
@@ -168,7 +184,7 @@ export default function CreateProductPage() {
                 </h3>
               </div>
               <Button
-                onClick={handleVarientsChange}
+                onClick={AddNewVarient}
                 type="button"
                 variant="secondary"
                 size="sm"
@@ -181,7 +197,7 @@ export default function CreateProductPage() {
 
             {/* Variant list  */}
             <div className="space-y-4">
-              {varients.map((variant, i) => (
+              {variantState.map((variant, i) => (
                 <div
                   key={variant.id}
                   className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 md:grid-cols-5 md:items-end"
@@ -249,7 +265,7 @@ export default function CreateProductPage() {
                   />
 
                   <div className="flex justify-end">
-                    {varients.length > 1 && (
+                    {variantState.length > 1 && (
                       <Button
                         onClick={() => deleteVarient(variant.id)}
                         type="button"
@@ -267,41 +283,100 @@ export default function CreateProductPage() {
           </section>
         </div>
 
-        <div className="space-y-8">
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="space-y-8 ">
+          <section className=" rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6 flex items-center gap-2 text-indigo-600">
               <ImageIcon className="h-5 w-5" />
               <h3 className="font-bold tracking-tight">Product Media</h3>
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-500">
-                  Main Thumbnail
-                </label>
-                <div className="relative w-48 aspect-square  overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-indigo-400">
-                  <label className="flex h-full w-full  cursor-pointer flex-col items-center justify-center gap-2">
-                    <Plus className="h-6 w-6 text-slate-300" />
-                    <span className="text-[10px] font-bold text-slate-400">
-                      UPLOAD THUMBNAIL
-                    </span>
-                    <Input type="file" className="hidden" />
+              <div className="flex items-center">
+                <div className="space-y-2 ">
+                  <label className="text-xs font-bold uppercase text-slate-500">
+                    Main Thumbnail
                   </label>
+                  <div className="relative w-48 aspect-square  overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-indigo-400">
+                    <label className="flex h-full w-full  cursor-pointer flex-col items-center justify-center gap-2">
+                      <Plus className="h-6 w-6 text-slate-300" />
+                      <span className="text-[10px] font-bold text-slate-400">
+                        UPLOAD THUMBNAIL
+                      </span>
+                      <Input
+                        onChange={(e) =>
+                          setNewProduct((prev) => ({
+                            ...prev,
+                            thumbnail: e.target.files[0],
+                          }))
+                        }
+                        type="file"
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  {newProduct.thumbnail && (
+                    <Image
+                      width={200}
+                      height={200}
+                      src={URL.createObjectURL(newProduct.thumbnail)}
+                      alt="thumbnail"
+                    />
+                  )}
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-500">
-                  Gallery Images
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <label className="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100">
-                    <Plus className="h-6 w-6 text-slate-300" />
-                    <span className="text-center text-[10px] font-bold text-slate-400">
-                      Upload Images
-                    </span>
-                    <Input type="file" multiple className="hidden" />
+              <div className="">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-slate-500">
+                    Gallery Images
                   </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <label className="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100">
+                      <Plus className="h-6 w-6 text-slate-300" />
+                      <span className="text-center text-[10px] font-bold text-slate-400">
+                        Upload Images
+                      </span>
+                      <Input
+                        onChange={handleImagesChange}
+                        type="file"
+                        multiple
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="mt-6 flex flex-wrap gap-4 items-center ">
+                  {newProduct.images.length > 0 &&
+                    newProduct.images.map((image, i) => {
+                      const imageUrl =
+                        typeof image === "string"
+                          ? image
+                          : URL.createObjectURL(image);
+                      return (
+                        <div
+                          // key={i}
+                          key={image.name ? `${image.name}-${i}` : i}
+                          className="border border-fuchsia-100 relative"
+                        >
+                          <Button
+                            onClick={() => handleImageDelete(i)}
+                            className="cursor-pointer absolute  -right-4 -top-5 hover:text-rose-800!  "
+                            size="xs"
+                            // rounded="xs"
+                            variant="ghost"
+                          >
+                            <MessageCircleX />
+                          </Button>
+                          <Image
+                            width={100}
+                            height={50}
+                            src={imageUrl}
+                            alt={`upload-preview-${i}`}
+                          />
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             </div>

@@ -330,7 +330,7 @@ const refreshAccessToken = async (req, res) => {
 
     res
       .cookie("X-AS-Token", accessToken, {
-        maxAge: 3600000, // 1 hour
+        maxAge: 172800000, // 48 hours
         httpOnly: false, // Security: prevent JS access
         secure: false, // Security: HTTPS only
         // sameSite: "lax", // CSRF protection
