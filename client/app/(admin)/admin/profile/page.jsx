@@ -6,6 +6,9 @@ import { FiBell, FiMoon, FiShield, FiSmartphone } from "react-icons/fi";
 import Button from "@/app/components/commonUI/Button";
 import Input from "@/app/components/commonUI/Input";
 import { MOCK_ADMIN_PROFILE } from "@/app/lib/mockData";
+import { useSignoutMutation } from "../../services/api";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const settingsSections = [
   {
@@ -35,6 +38,7 @@ const settingsSections = [
 export default function SettingsPage() {
   const [profile, setProfile] = useState(MOCK_ADMIN_PROFILE);
   const [previewUrl, setPreviewUrl] = useState(MOCK_ADMIN_PROFILE.avatar);
+  const [signout, { isLoading }] = useSignoutMutation();
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -47,6 +51,19 @@ export default function SettingsPage() {
     const nextUrl = URL.createObjectURL(file);
     setPreviewUrl(nextUrl);
     setProfile((current) => ({ ...current, avatar: nextUrl }));
+  };
+  const router = useRouter();
+  const handleSignout = async () => {
+    try {
+      const res = await signout().unwrap();
+      toast.success(res?.message || "Signed Out Successfully");
+      setTimeout(() => {
+        router.push("/");
+      }, 1200);
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to log out. Please try again.");
+    }
   };
 
   return (
@@ -129,9 +146,22 @@ export default function SettingsPage() {
               placeholder="Enter your location"
             />
           </div>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Button variant="primary">Save profile</Button>
-            <Button variant="outline">Cancel</Button>
+          <div className="mt-5 flex justify-between">
+            <div className="flex flex-wrap gap-3">
+              <Button className="cursor-pointer" variant="primary">
+                Save profile
+              </Button>
+              <Button className="cursor-pointer" variant="outline">
+                Cancel
+              </Button>
+            </div>
+            <Button
+              onClick={handleSignout}
+              className="cursor-pointer"
+              variant="logout"
+            >
+              Sign Out
+            </Button>
           </div>
         </div>
       </div>

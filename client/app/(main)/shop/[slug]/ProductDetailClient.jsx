@@ -13,10 +13,10 @@ import {
   Minus,
   Plus,
 } from "lucide-react";
-import { toast } from "react-hot-toast";
 import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
 import { addCartItem } from "@/app/lib/cartClient";
 import { FeatureItem } from "@/app/components/main/shop/FeatureItem";
+import { toast } from "sonner";
 
 const ProductDetailClient = ({ product }) => {
   // Safe Image Array Extractor

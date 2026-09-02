@@ -11,6 +11,7 @@ const {
   getUserProfile,
   updateProfile,
   refreshAccessToken,
+  signOut,
 } = require("../controllers/auth.controller");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const route = express.Router();
@@ -29,5 +30,6 @@ route.put(
   updateProfile,
 );
 route.post("/refreshaccesstoken", refreshAccessToken);
+route.post("/signout", signOut);
 
 module.exports = route;

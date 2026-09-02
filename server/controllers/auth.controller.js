@@ -342,6 +342,25 @@ const refreshAccessToken = async (req, res) => {
   }
 };
 
+const signOut = async (req, res) => {
+  // clearing cookies
+  try {
+    res.clearCookie("X-RF-Token", {
+      httpOnly: false,
+      secure: false,
+    });
+
+    res.clearCookie("X-AS-Token", {
+      httpOnly: false,
+      secure: false,
+    });
+
+    return sendResponse(res, 200, "Signed out successfully");
+  } catch (error) {
+    console.error("signOut Error:", error);
+    return sendResponse(res, 500, "Internal server error");
+  }
+};
 module.exports = {
   signUp,
   verifyOtp,
@@ -352,4 +371,5 @@ module.exports = {
   getUserProfile,
   updateProfile,
   refreshAccessToken,
+  signOut,
 };

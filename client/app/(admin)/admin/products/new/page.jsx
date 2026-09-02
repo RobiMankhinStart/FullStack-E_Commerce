@@ -20,8 +20,17 @@ import Button from "@/app/components/commonUI/Button";
 import Input from "@/app/components/commonUI/Input";
 import { useState } from "react";
 import Image from "next/image";
+import {
+  useCreateNewProductMutation,
+  useGetCategoryListQuery,
+} from "@/app/(admin)/services/api";
+import { generateSlug } from "@/app/lib/Utils";
+import { toast } from "sonner";
 
 export default function CreateProductPage() {
+  const { data: catagoryList } = useGetCategoryListQuery();
+  const [createNewProduct] = useCreateNewProductMutation();
+  // console.log("catagoryList : ", catagoryList);
   const clampNonNegativeNumber = (val) => {
     if (val === "" || val === undefined || val === null) return "";
     const strVal = String(val).trim();
@@ -54,7 +63,7 @@ export default function CreateProductPage() {
       stock: "",
     },
   ]);
-  console.log("variantState=", variantState);
+  // console.log("variantState=", variantState);
   const AddNewVarient = () => {
     const newVariant = {
       id: crypto.randomUUID(),
@@ -117,6 +126,46 @@ export default function CreateProductPage() {
     const updatedImages = newProduct.images.filter((_, index) => index !== i);
     setNewProduct((prev) => ({ ...prev, images: updatedImages }));
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+
+    for (const items in newProduct) {
+      if (items === "images") {
+        newProduct.images.forEach((file) => {
+          formData.append("images", file);
+        });
+      } else if (items === "variants") {
+        formData.append("variants", JSON.stringify(newProduct.variants));
+      } else {
+        formData.append(items, newProduct[items]);
+      }
+    }
+    try {
+      const res = await createNewProduct(formData).unwrap();
+      toast.success(res?.message || "Product created successfully");
+      console.log("success-response : ", res);
+
+      // clearing newProduct state
+      setNewProduct({
+        title: "",
+        slug: "",
+        description: "",
+        category: "",
+        price: "",
+        discountPercentage: "",
+        variants: [],
+        tags: "",
+        thumbnail: "",
+        images: [],
+      });
+    } catch (error) {
+      console.log("Error response :", error);
+      const errMessage = error?.data?.message || "Something went wrong";
+      toast.error(errMessage);
+    }
+  };
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
       <div className="mx-auto max-w-7xl px-4 pt-3 sm:px-6 lg:px-8 ">
@@ -128,7 +177,10 @@ export default function CreateProductPage() {
         </p>
       </div>
 
-      <form className="mx-auto mt-10 grid max-w-7xl gap-8 lg:grid-cols-3">
+      <form
+        onSubmit={handleSubmit}
+        className="mx-auto mt-10 grid max-w-7xl gap-8 lg:grid-cols-3"
+      >
         <div className="space-y-8 lg:col-span-2">
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
             <div className="mb-6 flex items-center gap-2 text-indigo-600">
@@ -138,9 +190,13 @@ export default function CreateProductPage() {
 
             <div className="grid gap-6">
               <Input
-                onChange={(e) =>
-                  setNewProduct((prev) => ({ ...prev, title: e.target.value }))
-                }
+                onChange={(e) => {
+                  setNewProduct((prev) => ({ ...prev, title: e.target.value }));
+                  setNewProduct((prev) => ({
+                    ...prev,
+                    slug: generateSlug(e.target.value),
+                  }));
+                }}
                 value={newProduct.title}
                 label="Product Title"
                 placeholder="e.g. Premium Cotton Hoodie"
@@ -148,9 +204,6 @@ export default function CreateProductPage() {
               />
 
               <Input
-                onChange={(e) =>
-                  setNewProduct((prev) => ({ ...prev, slug: e.target.value }))
-                }
                 value={newProduct.slug}
                 label="Slug (Auto-generated)"
                 readOnly
@@ -289,14 +342,14 @@ export default function CreateProductPage() {
               <ImageIcon className="h-5 w-5" />
               <h3 className="font-bold tracking-tight">Product Media</h3>
             </div>
-
+            {/* thumnail  */}
             <div className="space-y-6">
-              <div className="flex items-center">
+              <div className="flex flexcol gap-3 items-c">
                 <div className="space-y-2 ">
                   <label className="text-xs font-bold uppercase text-slate-500">
                     Main Thumbnail
                   </label>
-                  <div className="relative w-48 aspect-square  overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-indigo-400">
+                  <div className="relative w-28 aspect-square  overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-indigo-400">
                     <label className="flex h-full w-full  cursor-pointer flex-col items-center justify-center gap-2">
                       <Plus className="h-6 w-6 text-slate-300" />
                       <span className="text-[10px] font-bold text-slate-400">
@@ -326,6 +379,7 @@ export default function CreateProductPage() {
                   )}
                 </div>
               </div>
+              {/* product images  */}
               <div className="">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase text-slate-500">
@@ -387,11 +441,28 @@ export default function CreateProductPage() {
               <label className="text-sm font-semibold text-slate-700">
                 Category
               </label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 focus:bg-white">
-                <option value="">Select Category</option>
-                <option value="clothing">Clothing</option>
-                <option value="footwear">Footwear</option>
-                <option value="accessories">Accessories</option>
+              <select
+                value={newProduct.category || ""}
+                onChange={(e) =>
+                  setNewProduct((prev) => ({
+                    ...prev,
+                    category: e.target.value,
+                  }))
+                }
+                className="w-full capitalize rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 focus:bg-white"
+              >
+                <option value="" disabled>
+                  Select Category
+                </option>
+                {catagoryList?.data?.map((cgory) => (
+                  <option
+                    className="capitalize"
+                    key={cgory._id}
+                    value={cgory._id}
+                  >
+                    {cgory.name}
+                  </option>
+                ))}
               </select>
             </div>
 

@@ -3,6 +3,8 @@ import React from "react";
 const variantClasses = {
   primary:
     "border border-indigo-600 bg-indigo-600 text-white shadow-sm shadow-indigo-100 hover:bg-indigo-700 hover:shadow-md focus:ring-indigo-500",
+  logout:
+    "border border-rose-200 bg-rose-50 text-rose-600 shadow-sm shadow-rose-100 hover:bg-rose-100 hover:border-rose-300 hover:shadow-md focus:ring-rose-500 transition-all duration-200",
   secondary:
     "border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-400",
   outline:

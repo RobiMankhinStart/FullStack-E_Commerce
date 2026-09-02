@@ -2,10 +2,10 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { toast } from "react-hot-toast";
 import { Mail, MapPin, Clock, Send, Sparkles } from "lucide-react";
 import Input from "@/app/components/commonUI/Input";
 import Button from "@/app/components/commonUI/Button";
+import { toast } from "sonner";
 // import { apiClient } from "@/app/lib/apiClient";
 
 const ContactPage = () => {

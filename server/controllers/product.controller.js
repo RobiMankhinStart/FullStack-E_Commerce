@@ -41,7 +41,7 @@ const createProduct = async (req, res) => {
         "Price is required and minimum price is 100",
       );
 
-    // console.log("variants :", variants);
+    console.log("variants :", variants);
     const variantData = JSON.parse(variants);
     console.log("variants-After_Json :", variantData);
 

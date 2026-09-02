@@ -27,7 +27,7 @@ const navItems = [
   { href: "/admin/categories", label: "Categories", icon: FiLayers },
   { href: "/admin/inventory", label: "Inventory", icon: FiPackage },
   { href: "/admin/users", label: "Users", icon: FiUsers },
-  { href: "/admin/settings", label: "Settings", icon: FiSettings },
+  { href: "/admin/profile", label: "Profile", icon: FiSettings },
 ];
 
 export default function AdminShell({ children }) {
