@@ -4,7 +4,7 @@ const roleCheckMiddleware = (...role) => {
   return (req, res, next) => {
     try {
       console.log("RoleCheckMid-role :", role);
-      console.log("RoleCheckMid-req.user : ", req.user);
+      // console.log("RoleCheckMid-req.user : ", req.user);
 
       if (!req.user) {
         return sendResponse(res, 401, "Unauthorized: No user data found");

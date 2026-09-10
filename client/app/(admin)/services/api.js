@@ -20,6 +20,7 @@ const baseQueryWithAuth = async (args, api, extraOptions) => {
     );
 
     if (refreshResult.data) {
+      // Retry original request with the new cookie/token
       result = await baseQuery(args, api, extraOptions);
     }
   }
@@ -28,19 +29,21 @@ const baseQueryWithAuth = async (args, api, extraOptions) => {
 
 export const adminApi = createApi({
   baseQuery: baseQueryWithAuth,
-  //   tagTypes: ['Post'],
+  tagTypes: ["product", "category"],
   endpoints: (build) => ({
     getProductList: build.query({
       query: () => ({
-        url: "/product/productlist",
+        url: "/product/admin/productlist",
         method: "GET", // Optional: GET is the default method for queries
       }),
+      providesTags: ["product"],
     }),
     getCategoryList: build.query({
       query: () => ({
         url: "/category/all",
         method: "GET",
       }),
+      providesTags: ["category"],
     }),
     createNewProduct: build.mutation({
       query: (productData) => ({
@@ -49,6 +52,7 @@ export const adminApi = createApi({
         headers: { "Content-Type": "multipart/form-data" },
         body: productData,
       }),
+      invalidatesTags: ["product"],
     }),
     signout: build.mutation({
       query: () => ({

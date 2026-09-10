@@ -41,7 +41,7 @@ const createProduct = async (req, res) => {
         "Price is required and minimum price is 100",
       );
 
-    console.log("variants :", variants);
+    // console.log("variants :", variants);
     const variantData = JSON.parse(variants);
     console.log("variants-After_Json :", variantData);
 
@@ -49,7 +49,7 @@ const createProduct = async (req, res) => {
       return sendResponse(res, 400, "minimum 1 variant is required");
 
     for (const variant of variantData) {
-      console.log("variant", variant);
+      // console.log("variant", variant);
 
       if (!variant.sku) return sendResponse(res, 400, "SKU is required");
 
@@ -72,8 +72,8 @@ const createProduct = async (req, res) => {
     const images = req.files.images;
     // console.log("req.files:", req.files);
 
-    console.log("images:", req.files.images);
-    console.log("thumbnail:", req.files.thumbnail);
+    // console.log("images:", req.files.images);
+    // console.log("thumbnail:", req.files.thumbnail);
 
     if (!thumbnail || thumbnail?.length === 0)
       return sendResponse(res, 400, "Product thumbnail is required");
@@ -89,7 +89,7 @@ const createProduct = async (req, res) => {
         cloudinaryUpload(item, "products"),
       );
       const result = await Promise.all(res);
-      console.log("imagesCloud-upload-result", result);
+      // console.log("imagesCloud-upload-result", result);
 
       imgSecureUrl = result.map((su) => su.secure_url);
       // result.map((su) =>imgSecureUrl.push(su.secure_url) ); bad practice
@@ -118,6 +118,7 @@ const createProduct = async (req, res) => {
 };
 
 const getAllProducts = async (req, res) => {
+  console.log("product-list got hit");
   try {
     const page = parseInt(req.query.page) || 1;
     console.log("page :", page);
@@ -128,11 +129,28 @@ const getAllProducts = async (req, res) => {
     const category = req.query.category;
     console.log("category :", category);
 
-    const skip = (page - 1) * limit;
-    const totalProducts = await productSchema.countDocuments();
+    const search = req.query.search;
 
+    const skip = (page - 1) * limit;
+
+    const activeQuery = {};
+
+    if (!req?.user?.role || req?.user?.role === "user") {
+      activeQuery.isActive = true;
+    }
+
+    // If a search term exists, match it against title OR description (case-insensitive)
+    if (search) {
+      activeQuery.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // 3. Building the base filtering pipeline
     // for advance filtering
-    const pipeline = [
+    const basePipeline = [
+      { $match: activeQuery },
       {
         $lookup: {
           from: "categories",
@@ -142,35 +160,44 @@ const getAllProducts = async (req, res) => {
         },
       },
       { $unwind: "$category" },
+
+      // Appling category filter if it exists
       ...(category ? [{ $match: { "category.slug": category } }] : []),
 
       { $sort: { createdAt: -1 } },
       { $skip: skip },
       { $limit: limit },
     ];
-    // if (category) {
-    //   pipeline.push({
-    //     $match: {
-    //       "category.slug": category,
-    //     },
-    //   });
-    // }
 
-    const productList = await productSchema.aggregate(pipeline);
-    console.log("productList :", productList);
+    const pipeline = [
+      ...basePipeline,
+      {
+        $facet: {
+          // Pipeline 1: Counting total matching documents
+          metadata: [{ $count: "total" }],
+          // Pipeline 2: Getting the actual paginated data
+          data: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+          ],
+        },
+      },
+    ];
 
-    // for simple filtering
-    // const productList = await productSchema
-    //   .find()
-    //   .populate("category")
-    //   // .populate("category", "name")
-    //   .skip(skip)
-    //   .limit(limit)
-    //   .sort({ createdAt: -1 });
-    // for simple filtering
+    const result = await productSchema.aggregate(pipeline);
+    // console.log("productList result :", result);
+
+    // Extracting data from the $facet result
+    const productList = result[0].data;
+    // console.log("productList  :", productList);
+
+    const totalProducts = result[0].metadata[0]?.total || 0;
+    console.log("totalProducts  :", totalProducts);
 
     const totalPages = Math.ceil(totalProducts / limit);
 
+    // const totalProducts = await productSchema.countDocuments(activeQuery);
     return sendResponse(res, 201, "Product List", {
       productList: productList,
       pagination: {
@@ -182,8 +209,18 @@ const getAllProducts = async (req, res) => {
         hasPrevPage: page > 1,
       },
     });
+
+    // for simple filtering
+    // const productList = await productSchema
+    //   .find()
+    //   .populate("category")
+    //   // .populate("category", "name")
+    //   .skip(skip)
+    //   .limit(limit)
+    //   .sort({ createdAt: -1 });
+    // for simple filtering
   } catch (error) {
-    console.error("createCategory Error:", error);
+    console.error("getAllProducts Error:", error);
     return sendResponse(res, 500, "Internal server error");
   }
 };
@@ -218,12 +255,12 @@ const updateProduct = async (req, res) => {
     } = req.body;
     const { slug } = req.params;
     let deleteImgUrls = req.body.deleteImgUrls || [];
-    console.log("Searching for slug:", slug); // Debugging line
+    // console.log("Searching for slug:", slug); // Debugging line
     const thumbnail = req.files.thumbnail;
     const images = req.files.images;
 
     const productData = await productSchema.findOne({ slug });
-    console.log("Found product:", productData); // Debugging line
+    // console.log("Found product:", productData); // Debugging line
     if (!productData) return sendResponse(res, 404, "Product not found");
 
     if (title) productData.title = title;
@@ -240,7 +277,7 @@ const updateProduct = async (req, res) => {
       let variantData;
       try {
         variantData = JSON.parse(variants);
-        console.log("variants-After_Json :", variantData);
+        // console.log("variants-After_Json :", variantData);
       } catch (error) {
         console.log("variants error : ", error);
         return sendResponse(res, 400, "Invalid JSON format for variants");
@@ -251,7 +288,7 @@ const updateProduct = async (req, res) => {
       }
 
       for (const variant of variantData) {
-        console.log("variant", variant);
+        // console.log("variant", variant);
 
         if (!variant.sku) return sendResponse(res, 400, "SKU is required");
 
@@ -295,7 +332,7 @@ const updateProduct = async (req, res) => {
         "Product_Thumbnail",
       );
       productData.thumbnail = cloudRes.secure_url;
-      console.log("thumbnail :", cloudRes);
+      // console.log("thumbnail :", cloudRes);
     }
 
     // safety parsing of deleteImgUrls

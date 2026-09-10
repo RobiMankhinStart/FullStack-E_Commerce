@@ -1,10 +1,10 @@
-export const dynamic = "force-dynamic";
-
+// export const dynamic = "force-dynamic";
+import Form from "next/form";
 import React from "react";
 import Link from "next/link";
 import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
 import ProductCard from "./ProductCard";
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from "@/app/lib/mockData";
+import { apiClient } from "@/app/lib/apiClient";
 
 const ShopPage = async ({ searchParams }) => {
   const breadcrumbItems = [{ name: "Shop", href: "/shop" }];
@@ -28,20 +28,33 @@ const ShopPage = async ({ searchParams }) => {
       10,
     ) || 1;
 
-  // 2. Local mock filtering (Replaces backend API during dev stage)
-  const categories = MOCK_CATEGORIES;
+  const limit = 6;
 
-  let filteredProducts = MOCK_PRODUCTS.filter((prod) => {
-    const matchesCategory = category ? prod.category === category : true;
-    const matchesSearch = search
-      ? prod.title.toLowerCase().includes(search.toLowerCase()) ||
-        prod.description.toLowerCase().includes(search.toLowerCase())
-      : true;
-    return matchesCategory && matchesSearch;
-  });
+  // 2. Building the query string for the backend
+  const query = new URLSearchParams();
+  query.append("page", page);
+  query.append("limit", limit);
+  if (category) query.append("category", category);
+  if (search) query.append("search", search);
 
-  const totalPages = Math.ceil(filteredProducts.length / 6) || 1;
-  const products = filteredProducts;
+  // fetching product data here
+  const [res, categoryRes] = await Promise.all([
+    apiClient.get(`/product/productlist?${query.toString()}`, {
+      revalidate: 60,
+    }),
+    apiClient.get("/category/all", { revalidate: 60 }),
+  ]);
+
+  // extracting backend data
+  const products = res?.data?.productList || [];
+  const Pagination = res?.data?.pagination || {
+    totalPages: 1,
+    total: 0,
+    currentPage: 1,
+  };
+  console.log("Pagination :", Pagination);
+  const categories = categoryRes?.data || [];
+  const { totalPages, total: totalItems } = Pagination;
 
   return (
     <div className="bg-slate-50/60 text-slate-900 font-sans min-h-screen antialiased">
@@ -71,8 +84,10 @@ const ShopPage = async ({ searchParams }) => {
         {/* Filter Controls Row & Search */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8">
           {/* Search Form */}
-          <form
-            method="get"
+          <Form
+            // method="get"
+            action="/shop"
+            scroll={false}
             className="relative flex-grow max-w-md flex items-center"
           >
             {category && (
@@ -106,12 +121,13 @@ const ShopPage = async ({ searchParams }) => {
             >
               Search
             </button>
-          </form>
+          </Form>
 
           {/* Quick Clear / Filter Status */}
           <div className="flex items-center gap-3">
             {(search || category) && (
               <Link
+                scroll={false}
                 href="/shop"
                 className="inline-flex items-center gap-2 h-12 px-5 rounded-2xl bg-slate-200/70 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors"
               >
@@ -132,8 +148,7 @@ const ShopPage = async ({ searchParams }) => {
               </Link>
             )}
             <span className="text-xs text-slate-500 font-medium px-1">
-              Showing{" "}
-              <strong className="text-slate-900">{products.length}</strong>{" "}
+              Showing <strong className="text-slate-900">{totalItems}</strong>{" "}
               items
             </span>
           </div>
@@ -143,6 +158,7 @@ const ShopPage = async ({ searchParams }) => {
         <div className="mb-8 md:hidden overflow-x-auto pb-2 scrollbar-none">
           <div className="flex items-center gap-2">
             <Link
+              scroll={false}
               href={
                 search ? `/shop?search=${encodeURIComponent(search)}` : "/shop"
               }
@@ -154,8 +170,9 @@ const ShopPage = async ({ searchParams }) => {
             >
               All Items
             </Link>
-            {categories.map((cat) => (
+            {categories?.map((cat) => (
               <Link
+                scroll={false}
                 key={cat._id}
                 href={`/shop?${new URLSearchParams({
                   ...(search ? { search } : {}),
@@ -185,6 +202,7 @@ const ShopPage = async ({ searchParams }) => {
                 <ul className="space-y-1.5">
                   <li>
                     <Link
+                      scroll={false}
                       href={
                         search
                           ? `/shop?search=${encodeURIComponent(search)}`
@@ -197,16 +215,17 @@ const ShopPage = async ({ searchParams }) => {
                       }`}
                     >
                       <span>All Products</span>
-                      <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 font-normal">
-                        {MOCK_PRODUCTS.length}
-                      </span>
+                      {/* <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 font-normal">
+                        {res?.data?.productList?.length}
+                      </span> */}
                     </Link>
                   </li>
-                  {categories.map((cat) => {
+                  {categories?.map((cat) => {
                     const isActive = category === cat.slug;
                     return (
                       <li key={cat._id}>
                         <Link
+                          scroll={false}
                           href={`/shop?${new URLSearchParams({
                             ...(search ? { search } : {}),
                             category: cat.slug,
@@ -218,9 +237,9 @@ const ShopPage = async ({ searchParams }) => {
                           }`}
                         >
                           <span>{cat.name}</span>
-                          <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 font-normal">
+                          {/* <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 font-normal">
                             {cat.count}
-                          </span>
+                          </span> */}
                         </Link>
                       </li>
                     );
@@ -278,6 +297,7 @@ const ShopPage = async ({ searchParams }) => {
                   your search term or clearing filters.
                 </p>
                 <Link
+                  scroll={false}
                   href="/shop"
                   className="inline-flex h-10 px-6 rounded-xl bg-indigo-600 text-white font-bold text-xs items-center justify-center hover:bg-indigo-700 transition-colors"
                 >
@@ -291,6 +311,7 @@ const ShopPage = async ({ searchParams }) => {
               <div className="mt-16 flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Link
+                    scroll={false}
                     href={`/shop?${new URLSearchParams({
                       ...(search ? { search } : {}),
                       ...(category ? { category } : {}),
@@ -321,6 +342,7 @@ const ShopPage = async ({ searchParams }) => {
                     const num = idx + 1;
                     return (
                       <Link
+                        scroll={false}
                         key={num}
                         href={`/shop?${new URLSearchParams({
                           ...(search ? { search } : {}),
@@ -339,6 +361,7 @@ const ShopPage = async ({ searchParams }) => {
                   })}
 
                   <Link
+                    scroll={false}
                     href={`/shop?${new URLSearchParams({
                       ...(search ? { search } : {}),
                       ...(category ? { category } : {}),

@@ -21,7 +21,16 @@ route.post(
   ]),
   createProduct,
 );
+// for users
 route.get("/productlist", getAllProducts);
+
+// for admins
+route.get(
+  "/admin/productlist",
+  authMiddleware,
+  roleCheckMiddleware("admin"),
+  getAllProducts,
+);
 
 route.get("/:slug", getProductDetails);
 
