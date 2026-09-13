@@ -22,7 +22,7 @@ route.post("/resendotp", resendOtp);
 route.post("/signin", signIn);
 route.post("/forgetpassword", forgetPassword);
 route.post("/resetpass/:token", resetPassword);
-route.post("/profile", authMiddleware, getUserProfile);
+route.get("/profile", authMiddleware, getUserProfile);
 route.put(
   "/updateprofile",
   authMiddleware,

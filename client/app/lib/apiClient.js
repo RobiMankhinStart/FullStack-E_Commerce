@@ -12,12 +12,12 @@ async function request(
       "Content-Type": "application/json",
       ...headers,
     },
-    Credentials: "include",
+    credentials: "include",
     next: {},
   };
 
-  if (typeof revalidate === Number) {
-    config.method.revalidate = revalidate;
+  if (typeof revalidate === "number") {
+    config.next.revalidate = revalidate;
   }
 
   if (tags.length > 0) {

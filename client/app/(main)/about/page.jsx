@@ -12,7 +12,6 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
-import Button from "@/app/components/commonUI/Button";
 
 const AboutPage = () => {
   return (
@@ -118,14 +117,12 @@ const AboutPage = () => {
                 and craft into modern living.
               </p>
 
-              <Link href="/contact" passHref legacyBehavior>
-                <Button
-                  size="lg"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-4 font-bold text-white hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100 active:scale-[0.99]"
-                >
-                  <span>Contact our team</span>
-                  <ArrowRight size={18} />
-                </Button>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-4 font-bold text-white hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100 active:scale-[0.99]"
+              >
+                <span>Contact our team</span>
+                <ArrowRight size={18} />
               </Link>
             </div>
 

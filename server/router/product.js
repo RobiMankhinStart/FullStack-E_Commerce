@@ -21,6 +21,9 @@ route.post(
   ]),
   createProduct,
 );
+// for search query
+route.get("/", getAllProducts);
+
 // for users
 route.get("/productlist", getAllProducts);
 
