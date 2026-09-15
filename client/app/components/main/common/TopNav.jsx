@@ -135,6 +135,7 @@ const TopNav = () => {
       setAuthState({ status: "guest", role: null, email: null });
       setIsUserMenuOpen(false);
       setIsLoggingOut(false);
+      useCartStore.getState().clearCart();
       router.push("/signin");
       router.refresh();
     }

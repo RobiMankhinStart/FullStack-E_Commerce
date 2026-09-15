@@ -35,7 +35,7 @@ export default function ProductCard({ product }) {
       return;
     }
 
-    addToCart(product._id, selectedSku, 1);
+    addToCart(product._id, selectedSku, 1, product);
   };
 
   return (
