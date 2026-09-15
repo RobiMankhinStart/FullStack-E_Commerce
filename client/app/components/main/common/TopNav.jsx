@@ -19,8 +19,7 @@ import { apiClient } from "@/app/lib/apiClient";
 import { UserMenuItem } from "./UserMenuItem";
 import Button from "../../commonUI/Button";
 import Input from "../../commonUI/Input";
-
-// Import your newly created reusable components (adjust the path as needed)
+import { useCartStore } from "@/app/store/useCartStore";
 
 const TopNav = () => {
   const router = useRouter();
@@ -29,6 +28,12 @@ const TopNav = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Cart Store State
+  const { openCart, cartItems, fetchCart } = useCartStore();
+  const totalCartCount = Array.isArray(cartItems)
+    ? cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0)
+    : 0;
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,6 +53,8 @@ const TopNav = () => {
   const dashboardLabel = isAdminUser ? "Admin Dashboard" : "Customer Dashboard";
 
   useEffect(() => {
+    fetchCart();
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
@@ -71,7 +78,6 @@ const TopNav = () => {
       }
     };
 
-    // Close search dropdown when clicking outside
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setIsSearchOpen(false);
@@ -86,12 +92,10 @@ const TopNav = () => {
       window.removeEventListener("scroll", handleScroll);
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [fetchCart]);
 
-  // Live search debounced effect
   useEffect(() => {
     if (!searchQuery.trim()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchResults([]);
       setIsSearching(false);
       return;
@@ -115,7 +119,7 @@ const TopNav = () => {
       } finally {
         setIsSearching(false);
       }
-    }, 300);
+    }, 900);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -163,7 +167,6 @@ const TopNav = () => {
           ref={searchRef}
           className="relative hidden lg:block flex-1 max-w-md"
         >
-          {/* Integrated Reusable Input */}
           <Input
             type="text"
             placeholder="Search products..."
@@ -182,7 +185,6 @@ const TopNav = () => {
             className="rounded-full! bg-slate-100/80! hover:bg-slate-100! focus:bg-white! text-slate-900! text-xs! font-semibold! border-transparent! focus:border-slate-200! focus:ring-0! shadow-inner"
           />
 
-          {/* Search Results Dropdown - Desktop */}
           <AnimatePresence>
             {isSearchOpen && (
               <motion.div
@@ -215,7 +217,6 @@ const TopNav = () => {
                         }}
                         className="group flex items-center gap-4 p-3 rounded-xl hover:bg-indigo-50/50 hover:shadow-sm border border-transparent hover:border-indigo-100 transition-all duration-300"
                       >
-                        {/* New Image Container */}
                         <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-slate-100 shrink-0 shadow-inner flex items-center justify-center">
                           {product.image || product.thumbnail ? (
                             <Image
@@ -232,7 +233,6 @@ const TopNav = () => {
                           )}
                         </div>
 
-                        {/* Text Container */}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
                             {product.title || product.name}
@@ -242,7 +242,6 @@ const TopNav = () => {
                           </p>
                         </div>
 
-                        {/* Hover Action Icon */}
                         <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
                           <ArrowRight size={14} className="text-indigo-600" />
                         </div>
@@ -255,6 +254,7 @@ const TopNav = () => {
           </AnimatePresence>
         </div>
 
+        {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
             <Link
@@ -269,18 +269,24 @@ const TopNav = () => {
 
         <div className="flex items-center gap-6">
           {(authState.status === "guest" || authState.role === "user") && (
-            <Link
-              href="/cart"
-              className="text-slate-900 hover:text-indigo-600 transition-colors relative"
+            <button
+              onClick={openCart}
+              className="text-slate-900 hover:text-indigo-600 transition-colors relative cursor-pointer"
+              aria-label="Open Shopping Cart"
             >
               <ShoppingBag size={20} strokeWidth={2} />
-            </Link>
+              {totalCartCount > 0 && (
+                <span className="absolute -top-2 -right-2.5 bg-indigo-600 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                  {totalCartCount}
+                </span>
+              )}
+            </button>
           )}
 
+          {/* User Profile Dropdown */}
           <div className="relative">
             {isLoggedIn ? (
               <>
-                {/* Integrated Reusable Button */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -314,7 +320,6 @@ const TopNav = () => {
                         label={dashboardLabel}
                       />
 
-                      {/* Integrated Reusable Button - Logout Variant */}
                       <Button
                         variant="logout"
                         fullWidth
@@ -339,7 +344,6 @@ const TopNav = () => {
             )}
           </div>
 
-          {/* Integrated Reusable Button - Mobile Menu */}
           <Button
             variant="ghost"
             size="icon"
@@ -361,7 +365,6 @@ const TopNav = () => {
             className="absolute top-full left-0 w-full bg-white shadow-xl border-t border-slate-100 p-8 flex flex-col gap-6 md:hidden overflow-hidden"
           >
             <div className="relative">
-              {/* Integrated Reusable Input for Mobile Menu */}
               <Input
                 type="text"
                 placeholder="Search products..."
@@ -373,7 +376,6 @@ const TopNav = () => {
                 className="rounded-full! bg-slate-100! text-slate-900! text-xs! font-semibold! border-transparent! focus:border-slate-200! focus:ring-0! shadow-inner"
               />
 
-              {/* Mobile Search Results */}
               {searchResults.length > 0 && (
                 <div className="mt-4 flex flex-col gap-2 max-h-60 overflow-y-auto">
                   {searchResults.map((product) => (

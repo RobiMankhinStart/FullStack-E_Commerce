@@ -2,6 +2,7 @@ import React from "react";
 import Footer from "../components/commonUI/Footer";
 import { Toaster } from "sonner";
 import TopNav from "../components/main/common/TopNav";
+import CartDrawer from "../components/commonUI/CartDrawer";
 
 const MainLayout = ({ children }) => {
   return (
@@ -9,7 +10,8 @@ const MainLayout = ({ children }) => {
       <TopNav />
       <main className="mt-20">{children}</main>
       <Footer />
-      <Toaster richColors position="top-right" />
+      <CartDrawer />
+      <Toaster richColors position="top-center" />
     </div>
   );
 };

@@ -28,26 +28,25 @@ async function request(
     config.body = JSON.stringify(body);
   }
 
-  try {
-    const res = await fetch(`${baseUrl}${endpoint}`, config);
+  const res = await fetch(`${baseUrl}${endpoint}`, config);
 
-    let data;
-    const contentType = res.headers.get("content-type");
+  let data;
+  const contentType = res.headers.get("content-type");
 
-    if (contentType?.includes("application/json")) {
-      data = await res.json();
-    } else {
-      data = await res.text();
-    }
-
-    if (!res.ok) {
-      throw new Error(data?.message || "API request failed");
-    }
-    return data;
-  } catch (error) {
-    console.error("API Error:", error.message);
-    throw error;
+  if (contentType?.includes("application/json")) {
+    data = await res.json();
+  } else {
+    data = await res.text();
   }
+
+  if (!res.ok) {
+    const error = new Error(data?.message || "API request failed");
+    error.status = res.status;
+    error.data = data;
+    throw error;
+    // throw new Error(data?.message || "API request failed");
+  }
+  return data;
 }
 
 export const apiClient = {

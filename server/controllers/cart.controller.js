@@ -99,7 +99,8 @@ const addToCart = async (req, res) => {
 
     // Simple check: If the cart existed before and we didn't add the item (because of the $ne check),
     // or if the logic flow above needs refinement:
-    return sendResponse(res, 201, "Product added to cart");
+    await cart.save();
+    return sendResponse(res, 201, "Product added to cart", cart);
   } catch (error) {
     // If the duplicate key error happens (e.g. unique index on user), handlling it
     if (error.code === 11000) {
@@ -114,7 +115,15 @@ const getUserCart = async (req, res) => {
   try {
     const cart = await cartSchema
       .findOne({ user: req.user._id })
+      .populate(
+        "items.product",
+        "title image price thumbnail discountPercentage",
+      )
       .select("-user");
+
+    if (!cart) {
+      return sendResponse(res, 200, "Cart is empty", { items: [] });
+    }
 
     return sendResponse(res, 200, "", cart);
   } catch (error) {
@@ -134,7 +143,7 @@ const updateCart = async (req, res) => {
       return sendResponse(res, 400, "invalid request");
 
     const numQuan = parseInt(quantity, 10);
-    if (numQuan < 1) return sendResponse(res, 400, "keep minimum 1 product ");
+    if (numQuan < 1) return sendResponse(res, 400, "keep minimum 1 product");
 
     const productData = await productSchema.findById(productId);
 
@@ -145,18 +154,21 @@ const updateCart = async (req, res) => {
 
     const subTotal = discountedPrice * quantity;
 
-    const cart = await cartSchema
-      .findOneAndUpdate(
-        {
-          user: req.user._id,
-          "items._id": itemId,
-        },
-        {
-          $set: { "items.$.quantity": quantity, "items.$.subTotal": subTotal },
-        },
-        { new: true },
-      )
-      .select("items totalItems ");
+    const cart = await cartSchema.findOneAndUpdate(
+      {
+        user: req.user._id,
+        "items._id": itemId,
+      },
+      {
+        $set: { "items.$.quantity": quantity, "items.$.subTotal": subTotal },
+      },
+      { new: true },
+    );
+    // .select("items totalItems ");
+    if (!cart) return sendResponse(res, 404, "Cart or item not found");
+
+    // Triggers pre("save") hook to update totalItems & totalPrice
+    await cart.save();
 
     return sendResponse(res, 200, "Cart updated", cart);
   } catch (error) {
@@ -174,18 +186,21 @@ const removeFromCart = async (req, res) => {
 
     if (!itemId) return sendResponse(res, 400, "invalid request");
 
-    const cart = await cartSchema
-      .findOneAndUpdate(
-        {
-          user: req.user._id,
-          "items._id": itemId,
-        },
-        {
-          $pull: { items: { _id: itemId } },
-        },
-        { new: true },
-      )
-      .select("items totalItems ");
+    const cart = await cartSchema.findOneAndUpdate(
+      {
+        user: req.user._id,
+        "items._id": itemId,
+      },
+      {
+        $pull: { items: { _id: itemId } },
+      },
+      { new: true },
+    );
+    // .select("items totalItems ");
+    if (!cart) return sendResponse(res, 404, "Cart or item not found");
+
+    // Triggers pre("save") hook to update totalItems & totalPrice
+    await cart.save();
 
     return sendResponse(res, 200, "Item removed", cart);
   } catch (error) {

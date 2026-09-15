@@ -14,11 +14,13 @@ import {
   Plus,
 } from "lucide-react";
 import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
-import { addCartItem } from "@/app/lib/cartClient";
 import { FeatureItem } from "@/app/components/main/shop/FeatureItem";
 import { toast } from "sonner";
+import { useCartStore } from "@/app/store/useCartStore";
 
 const ProductDetailClient = ({ product }) => {
+  const { addToCart } = useCartStore();
+
   // Safe Image Array Extractor
   const galleryImages = useMemo(() => {
     if (Array.isArray(product.images) && product.images.length > 0) {
@@ -98,7 +100,7 @@ const ProductDetailClient = ({ product }) => {
         quantity: quantity,
       };
 
-      await addCartItem(cartItem);
+      await addToCart(cartItem);
       toast.success("Added to cart!");
     } catch (error) {
       toast.error("Failed to add item to cart");
@@ -111,7 +113,7 @@ const ProductDetailClient = ({ product }) => {
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BreadCrumb items={breadcrumbItems} />
+        {/* <BreadCrumb items={breadcrumbItems} /> */}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16 mt-6 items-start">
           {/* Left Column: Image Gallery */}
@@ -131,7 +133,7 @@ const ProductDetailClient = ({ product }) => {
                     alt={product.title}
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover"
+                    className="object-contain rounded-xl"
                     priority
                   />
                 </motion.div>

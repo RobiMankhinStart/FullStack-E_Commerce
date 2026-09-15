@@ -3,8 +3,8 @@ import Form from "next/form";
 import React from "react";
 import Link from "next/link";
 import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
-import ProductCard from "./ProductCard";
 import { apiClient } from "@/app/lib/apiClient";
+import ProductCard from "@/app/components/main/shop/ProductCard";
 
 const ShopPage = async ({ searchParams }) => {
   const breadcrumbItems = [{ name: "Shop", href: "/shop" }];

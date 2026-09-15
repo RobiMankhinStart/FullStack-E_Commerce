@@ -1,43 +1,66 @@
-// export const dynamic = "force-dynamic";
+import { apiClient } from "@/app/lib/apiClient";
+import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
+// import ProductDetailsClient from "./ProductDetailsClient";
+import { notFound } from "next/navigation";
+import ProductDetailClient from "./ProductDetailClient";
 
-// import React from "react";
-// import { apiClient } from "@/app/lib/apiClient";
-// import ProductDetailClient from "./ProductDetailClient";
-// import { ProductNotFoundUI } from "@/app/components/main/shop/ProductNotFoundUI";
+// Generating Dynamic Metadata for SEO
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  console.log("Fetching slug:", slug);
+  try {
+    const res = await apiClient.get(`/product/${slug}`);
+    console.log("product", res);
+    const product = res?.data || res?.data?.productDetails;
 
-// const ProductDetailPage = async ({ params }) => {
-//   // Await params explicitly for Next.js 15 compatibility
-//   const resolvedParams = await params;
-//   const currentSlug = resolvedParams?.slug;
+    if (!product) return { title: "Product Not Found" };
 
-//   if (!currentSlug) {
-//     return <ProductNotFoundUI />;
-//   }
+    return {
+      title: `${product.title} | Shop`,
+      description: product.description?.substring(0, 160),
+    };
+  } catch {
+    return { title: "Product Details" };
+  }
+}
 
-//   try {
-//     // Request product detail endpoint by slug
-//     const response = await apiClient.get(
-//       `/product/${currentSlug.toLowerCase()}`,
-//       {
-//         revalidate: 300, // Revalidate cache every 5 minutes
-//       },
-//     );
+const ProductDetailPage = async ({ params }) => {
+  // Next.js 15+ async params unwrapping
+  const { slug } = await params;
 
-//     const product = response?.data || null;
+  let product = null;
 
-//     if (!product) {
-//       // eslint-disable-next-line react-hooks/error-boundaries
-//       return <ProductNotFoundUI />;
-//     }
+  try {
+    const res = await apiClient.get(`/product/${slug}`, {
+      revalidate: 60,
+    });
+    // Adjust key extraction based on your backend sendResponse standard
+    product = res?.data?.data || res?.data || null;
+  } catch (error) {
+    console.error("Failed to fetch product details:", error);
+  }
 
-//     // eslint-disable-next-line react-hooks/error-boundaries
-//     return <ProductDetailClient product={product} />;
-//   } catch (error) {
-//     console.error("Failed to fetch product details:", error);
-//     return <ProductNotFoundUI />;
-//   }
-// };
+  if (!product) {
+    notFound();
+  }
 
-// // Fallback UI for missing or un-fetched items
+  const breadcrumbItems = [
+    { name: "Shop", href: "/shop" },
+    {
+      name: product.category?.name || "Category",
+      href: `/shop?category=${product.category?.slug || ""}`,
+    },
+    { name: product.title, href: `/shop/${slug}` },
+  ];
 
-// export default ProductDetailPage;
+  return (
+    <div className="bg-slate-50/60 text-slate-900 font-sans min-h-screen antialiased">
+      <main className="pt-6 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <BreadCrumb items={breadcrumbItems} />
+        <ProductDetailClient product={product} />
+      </main>
+    </div>
+  );
+};
+
+export default ProductDetailPage;
