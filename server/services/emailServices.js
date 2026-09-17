@@ -1,7 +1,9 @@
 const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  port: 587,
+  // service: "gmail",
+  // port: 587,
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT) || 587,
   secure: false, // use STARTTLS (upgrade connection to TLS after connecting)
   auth: {
     user: process.env.SMTP_USER,
@@ -12,14 +14,14 @@ const transporter = nodemailer.createTransport({
 const sentVerificationEmail = async ({ email, subject, parameter, temp }) => {
   try {
     const info = await transporter.sendMail({
-      from: '"Ecommerce" <robileo47@gmail.com>', // sender address
+      from: `"Ecommerce" <${process.env.SENDER_EMAIL}>`, // sender address
       to: email, // list of recipients
       subject: subject,
       // text: `your otp is ${otp}`,
       html: temp(parameter),
     });
 
-    console.log("Message sent: %s", info.messageId);
+    console.log("Message sent to Mailtrap inbox. ID: %s", info.messageId);
     // Preview URL is only available when using an Ethereal test account
     console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
   } catch (err) {
