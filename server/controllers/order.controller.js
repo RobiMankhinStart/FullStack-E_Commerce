@@ -8,7 +8,7 @@ const checkOut = async (req, res) => {
 
     const orderNumber = Date.now();
 
-    if (!paymentType) return sendResponse(res, 400, "Payment type required");
+    if (!paymentType) return sendResponse(res, 400, "Payment type is required");
     // if (!cartId) return sendResponse(res, 400, "cartId required");
     if (!shippingAddress)
       return sendResponse(res, 400, "shipping Address  required");
@@ -46,6 +46,8 @@ const checkOut = async (req, res) => {
       await orderData.save();
       return sendResponse(res, 200, "Order placed successfully", orderData);
     }
+
+    //payment with stripe
     if (paymentType === "Stripe") {
       // creating stripesession
       const session = await stripe.checkout.sessions.create({
@@ -63,7 +65,7 @@ const checkOut = async (req, res) => {
             price_data: {
               currency: "bdt",
               product_data: {
-                name: "Your Order Total",
+                name: "Your total Order",
                 description: `Includes delivery charge of ৳${deliveryCharge}`,
               },
               unit_amount: Math.round(totalPrice * 100), // Correct calculation in cents/poisha
@@ -77,7 +79,7 @@ const checkOut = async (req, res) => {
         metadata: { orderId: orderData._id.toString() }, //IMPORTANT: Linking payment to my DB order
       });
 
-      // updation order with sesion Id
+      // updating order with sesion Id
       orderData.payment.sessionId = session.id;
       await orderData.save();
 

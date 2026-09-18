@@ -46,6 +46,10 @@ const CartDrawer = () => {
     router.push("/shop");
   };
 
+  const handleContinueShopping = () => {
+    closeCart();
+    router.push("/shop");
+  };
   return (
     <AnimatePresence>
       {isCartOpen && (
@@ -138,19 +142,25 @@ const CartDrawer = () => {
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <Button
-                    variant="ghost"
-                    className="w-full bg-white border border-slate-200 hover:bg-slate-100! text-slate-900!"
-                    onClick={closeCart}
+                    variant="outline"
+                    className="w-full cursor-pointer bg-white border border-slate-200 hover:bg-slate-100! text-slate-900!"
+                    onClick={handleContinueShopping}
                   >
                     Continue Shopping
                   </Button>
                   <Link href="/checkout" onClick={closeCart} className="w-full">
-                    <Button variant="primary" className="w-full group">
-                      Checkout
-                      <ArrowRight
-                        size={16}
-                        className="ml-2 group-hover:translate-x-1 transition-transform"
-                      />
+                    <Button
+                      onClick={closeCart}
+                      variant="primary"
+                      className="w-full hover:cursor-pointer py-3.5 font-bold"
+                    >
+                      <div className="flex items-center justify-center gap-2 w-full">
+                        <span>Checkout</span>
+                        <ArrowRight
+                          size={16}
+                          className="ml-2 group-hover:translate-x-1 transition-transform"
+                        />
+                      </div>
                     </Button>
                   </Link>
                 </div>

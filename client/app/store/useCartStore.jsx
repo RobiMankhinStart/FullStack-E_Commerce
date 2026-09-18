@@ -140,11 +140,18 @@ export const useCartStore = create(
         try {
           const res = await apiClient.get("/cart/get");
 
+          // Extract cartId from response shapes
+          const fetchedCartId =
+            res?._id || res?.data?._id || res?.cart?._id || null;
+
           // Extracting array safely from possible nested response shapes
           const items =
             res?.items || res?.data?.items || (Array.isArray(res) ? res : []);
 
-          set({ cartItems: Array.isArray(items) ? items : [] });
+          set({
+            cartId: fetchedCartId,
+            cartItems: Array.isArray(items) ? items : [],
+          });
         } catch (error) {
           console.error("Fetch cart error:", error);
           set({ cartItems: [] });
@@ -321,7 +328,7 @@ export const useCartStore = create(
 
       // 6. Cleaning state & localStorage after logging out
       clearCart: () => {
-        set({ cartItems: [] });
+        set({ cartId: null, cartItems: [] });
         if (typeof window !== "undefined") {
           localStorage.removeItem("guest-cart-storage");
         }

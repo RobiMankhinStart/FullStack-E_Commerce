@@ -269,6 +269,7 @@ const TopNav = () => {
         </div>
 
         <div className="flex items-center gap-6">
+          {/* cart button   */}
           {(authState.status === "guest" || authState.role === "user") && (
             <button
               onClick={openCart}
