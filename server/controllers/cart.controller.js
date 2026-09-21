@@ -208,4 +208,30 @@ const removeFromCart = async (req, res) => {
     return sendResponse(res, 500, "Internal server error");
   }
 };
-module.exports = { addToCart, getUserCart, updateCart, removeFromCart };
+
+const clearUserCart = async (req, res) => {
+  try {
+    const cart = await cartSchema.findOne({ user: req.user._id });
+
+    if (!cart) {
+      return sendResponse(res, 200, "Cart is already empty", { items: [] });
+    }
+
+    cart.items = [];
+    cart.totalItems = 0;
+    cart.totalPrice = 0;
+
+    await cart.save();
+    return sendResponse(res, 200, "Cart cleared successfully", cart);
+  } catch (error) {
+    console.error("clearUserCart Error:", error);
+    return sendResponse(res, 500, "Internal server error");
+  }
+};
+module.exports = {
+  addToCart,
+  getUserCart,
+  updateCart,
+  removeFromCart,
+  clearUserCart,
+};

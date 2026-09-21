@@ -293,8 +293,8 @@ const ShopPage = async ({ searchParams }) => {
                   No products found
                 </h2>
                 <p className="text-slate-500 text-xs leading-relaxed mb-6">
-                  We couldn't find anything matching your filters. Try adjusting
-                  your search term or clearing filters.
+                  We couldn&apos;t find anything matching your filters. Try
+                  adjusting your search term or clearing filters.
                 </p>
                 <Link
                   scroll={false}

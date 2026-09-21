@@ -1,6 +1,5 @@
 import { apiClient } from "@/app/lib/apiClient";
 import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
-// import ProductDetailsClient from "./ProductDetailsClient";
 import { notFound } from "next/navigation";
 import ProductDetailClient from "./ProductDetailClient";
 
@@ -46,10 +45,6 @@ const ProductDetailPage = async ({ params }) => {
 
   const breadcrumbItems = [
     { name: "Shop", href: "/shop" },
-    {
-      name: product.category?.name || "Category",
-      href: `/shop?category=${product.category?.slug || ""}`,
-    },
     { name: product.title, href: `/shop/${slug}` },
   ];
 

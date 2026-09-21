@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ShoppingBag, ArrowRight } from "lucide-react";
 import Button from "@/app/components/commonUI/Button";
+import { apiClient } from "@/app/lib/apiClient";
 import { useCartStore } from "@/app/store/useCartStore";
 
 export default function SuccessPage() {
@@ -11,18 +12,23 @@ export default function SuccessPage() {
   const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
-    // Clear local cart store after successful payment redirection
-    clearCart();
-    const timer = setTimeout(() => {
-      useCartStore.getState().fetchCart();
-    }, 1500);
-    return () => clearTimeout(timer);
+    const clearCartAfterOrder = async () => {
+      clearCart();
+
+      try {
+        await apiClient.post("/cart/clear");
+      } catch (error) {
+        console.warn("Cart clear request failed:", error?.message || error);
+      }
+    };
+
+    clearCartAfterOrder();
   }, [clearCart]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-slate-50/50">
       <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-100 shadow-sm text-center space-y-6">
-        {/* Animated / Colored Success Icon */}
+        {/* Success Icon */}
         <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto text-emerald-500">
           <CheckCircle2 size={48} strokeWidth={2.5} />
         </div>
@@ -62,7 +68,7 @@ export default function SuccessPage() {
             variant="outline"
             className="w-full py-3.5 hover:cursor-pointer font-semibold text-slate-600 border-slate-200"
           >
-            <div className="flex items-center gap-2 w-full">
+            <div className="flex items-center justify-center gap-2 w-full">
               <span>Back to Home</span>
               <ArrowRight size={16} />
             </div>

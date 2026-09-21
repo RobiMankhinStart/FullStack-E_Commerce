@@ -12,12 +12,16 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
 
 const AboutPage = () => {
+  const breadcrumbItems = [{ name: "About", href: "/about" }];
+
   return (
     <main className="bg-slate-50 min-h-screen text-slate-900">
       {/* Hero Section */}
-      <section className="px-6 py-16 lg:px-12 max-w-screen-2xl mx-auto">
+      <section className="px-6 py-10 lg:px-12 max-w-screen-2xl mx-auto">
+        <BreadCrumb items={breadcrumbItems} />
         <div className="max-w-3xl">
           <span className="text-xs font-black uppercase tracking-[0.25em] text-indigo-600 mb-3 flex items-center gap-2">
             <Sparkles size={16} /> About RoyalCart

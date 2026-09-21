@@ -19,7 +19,8 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
     phone: {
-      type: Number,
+      type: String,
+      trim: true,
     },
     address: {
       type: String,
@@ -47,12 +48,8 @@ const userSchema = new mongoose.Schema(
 
 // middleware
 userSchema.pre("save", async function () {
-  try {
-    if (!this.isModified("password")) return;
-    this.password = await bcrypt.hash(this.password, 10);
-  } catch (error) {
-    console.log(error);
-  }
+  if (!this.isModified("password")) return;
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
 userSchema.methods.comparePasswords = async function (candidatePass) {

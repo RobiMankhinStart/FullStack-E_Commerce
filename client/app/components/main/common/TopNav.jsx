@@ -95,11 +95,8 @@ const TopNav = () => {
   }, [fetchCart]);
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) return;
 
     const timer = setTimeout(async () => {
       setIsSearching(true);
@@ -123,6 +120,17 @@ const TopNav = () => {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  const handleSearchInputChange = (event) => {
+    const nextQuery = event.target.value;
+    setSearchQuery(nextQuery);
+    setIsSearchOpen(true);
+
+    if (!nextQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+    }
+  };
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -173,10 +181,7 @@ const TopNav = () => {
             placeholder="Search products..."
             value={searchQuery}
             onFocus={() => setIsSearchOpen(true)}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setIsSearchOpen(true);
-            }}
+            onChange={handleSearchInputChange}
             leftIcon={<Search size={16} />}
             rightIcon={searchQuery ? <X size={14} /> : null}
             rightIconAction={() => {

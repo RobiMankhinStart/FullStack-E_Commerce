@@ -129,16 +129,23 @@ export const useCartStore = create(
 
       // Data State
       cartItems: [],
+      cartId: null,
       isLoading: false,
+      lastCartClearAt: 0,
 
       // 1. FETCH CART
       fetchCart: async () => {
         // If guest, keep items currently stored in localStorage
         if (!isUserLoggedIn()) return;
 
+        const requestStartedAt = Date.now();
         set({ isLoading: true });
         try {
           const res = await apiClient.get("/cart/get");
+
+          if (get().lastCartClearAt > requestStartedAt) {
+            return;
+          }
 
           // Extract cartId from response shapes
           const fetchedCartId =
@@ -153,6 +160,9 @@ export const useCartStore = create(
             cartItems: Array.isArray(items) ? items : [],
           });
         } catch (error) {
+          if (get().lastCartClearAt > requestStartedAt) {
+            return;
+          }
           console.error("Fetch cart error:", error);
           set({ cartItems: [] });
         } finally {
@@ -328,7 +338,11 @@ export const useCartStore = create(
 
       // 6. Cleaning state & localStorage after logging out
       clearCart: () => {
-        set({ cartId: null, cartItems: [] });
+        set({
+          cartId: null,
+          cartItems: [],
+          lastCartClearAt: Date.now(),
+        });
         if (typeof window !== "undefined") {
           localStorage.removeItem("guest-cart-storage");
         }

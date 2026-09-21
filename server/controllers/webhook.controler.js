@@ -1,6 +1,7 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cartSchema = require("../models/cartSchema");
 const orderSchema = require("../models/orderSchema");
+const productSchema = require("../models/productSchema");
 
 const stripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -21,42 +22,89 @@ const stripeWebhook = async (req, res) => {
   //   // Handlling the event
   const session = event.data.object;
 
-  if (event.type === "checkout.session.completed") {
-    // console.log("Stripe Session Data:", session);
-    console.log("Metadata:", session.metadata);
-    console.log("Stripe Session Data Completed:", session.id);
-    const orderId = session.metadata.orderId;
+  try {
+    if (event.type === "checkout.session.completed") {
+      const cartId = session.metadata?.cartId;
+      // console.log("Stripe Session Data:", session);
+      console.log("Metadata:", session.metadata);
+      console.log("Stripe Session Data Completed:", session.id);
 
-    //     // 1. Updating Order Status
-    const order = await orderSchema.findByIdAndUpdate(
-      orderId,
-      {
-        "payment.status": "paid",
-        "payment.sessionId": session.id,
-        status: "confirmed",
-      },
-      { new: true },
-    );
+      const orderId = session.metadata?.orderId;
+      if (!orderId) {
+        console.error("Webhook Error: orderId missing from session metadata");
+        return res.status(400).json({ error: "Missing orderId metadata" });
+      }
 
-    // 2. Clearing Cart
-    if (order) {
-      await cartSchema.findOneAndUpdate({ user: order.user }, { items: [] });
+      const existingOrder = await orderSchema.findById(orderId);
+      if (existingOrder && existingOrder.payment?.status === "paid") {
+        return res.status(200).json({ received: true });
+      }
+
+      // 1. Updating Order Status
+      const order = await orderSchema.findByIdAndUpdate(
+        orderId,
+        {
+          "payment.status": "paid",
+          "payment.sessionId": session.id,
+          "payment.paymentId": session.payment_intent,
+          "payment.paidAt": new Date(),
+          status: "confirmed",
+        },
+        { new: true },
+      );
+
+      if (order) {
+        // Deducting stock for each purchased item variant
+        for (const item of order.items) {
+          if (item.sku && item.sku.trim() !== "") {
+            await productSchema.updateOne(
+              { _id: item.product, "variants.sku": item.sku },
+              { $inc: { "variants.$.stock": -item.quantity } },
+            );
+          } else {
+            // Deduct main stock if no variant SKU exists
+            await productSchema.updateOne(
+              { _id: item.product },
+              { $inc: { stock: -item.quantity } },
+            );
+          }
+        }
+
+        // 2. Clearing Cart
+        const cartFilter = cartId ? { _id: cartId } : { user: order.user };
+        const cartUpdateResult = await cartSchema.updateOne(cartFilter, {
+          $set: {
+            items: [],
+            totalItems: 0,
+            totalPrice: 0,
+          },
+        });
+      }
     }
-  }
 
-  // 2. FAILURE
-  // else if (event.type === "payment_intent.payment_failed") {
-  else if (event.type === "checkout.session.expired") {
-    console.log("Payment failed for PaymentIntent:", session.id);
+    // 2. FAILURE
+    // else if (event.type === "payment_intent.payment_failed") {
+    else if (event.type === "checkout.session.expired") {
+      console.log("Payment failed for PaymentIntent:", session.id);
+      const orderId = session.metadata?.orderId;
+      const queryConditions = [{ "payment.sessionId": session.id }];
 
-    await orderSchema.findOneAndUpdate(
-      { "payment.sessionId": session.id },
-      {
-        "payment.status": "failed",
-        status: "cancelled",
-      },
-    );
+      if (orderId) {
+        queryConditions.push({ _id: orderId });
+      }
+
+      await orderSchema.findOneAndUpdate(
+        { $or: queryConditions },
+        {
+          "payment.status": "failed",
+          status: "cancelled",
+        },
+      );
+    }
+    return res.status(200).json({ received: true });
+  } catch (error) {
+    console.error("Webhook Processing Error:", error);
+    return res.status(500).send("Webhook handler failed");
   }
-  res.json({ received: true });
 };
 module.exports = { stripeWebhook };

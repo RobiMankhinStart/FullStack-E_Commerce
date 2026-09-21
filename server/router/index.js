@@ -14,5 +14,5 @@ route.use("/auth", authRoute);
 route.use("/product", productRoute);
 route.use("/category", categoryRoute);
 route.use("/cart", authMiddleware, cartRoute);
-route.use(authMiddleware, orderRoute);
+route.use("/order", authMiddleware, orderRoute);
 module.exports = route;

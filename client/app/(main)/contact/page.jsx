@@ -6,6 +6,7 @@ import { Mail, MapPin, Clock, Send, Sparkles } from "lucide-react";
 import Input from "@/app/components/commonUI/Input";
 import Button from "@/app/components/commonUI/Button";
 import { toast } from "sonner";
+import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
 // import { apiClient } from "@/app/lib/apiClient";
 
 const ContactPage = () => {
@@ -45,11 +46,14 @@ const ContactPage = () => {
       setIsSubmitting(false);
     }
   };
+  const breadcrumbItems = [{ name: "Contact", href: "/contact" }];
 
   return (
     <main className="bg-slate-50 min-h-screen text-slate-900">
       {/* Header Section */}
-      <section className="px-6 py-16 lg:px-12 max-w-screen-2xl mx-auto">
+      <section className="px-6 py-10 lg:px-12 max-w-screen-2xl mx-auto">
+        <BreadCrumb items={breadcrumbItems} />
+
         <div className="max-w-3xl">
           <span className="text-xs font-black uppercase tracking-[0.25em] text-indigo-600 mb-3 flex items-center gap-2">
             <Sparkles size={16} /> Get in touch

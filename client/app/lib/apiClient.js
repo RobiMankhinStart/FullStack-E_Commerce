@@ -6,15 +6,28 @@ async function request(
   endpoint,
   { method = "GET", body, headers = {}, revalidate, tags = [] } = {},
 ) {
+  const isFormData =
+    typeof FormData !== "undefined" && body instanceof FormData;
+
+  const defaultHeaders = {};
+  if (!isFormData) {
+    defaultHeaders["Content-Type"] = "application/json";
+  }
+
   const config = {
     method,
     headers: {
-      "Content-Type": "application/json",
+      ...defaultHeaders,
       ...headers,
     },
     credentials: "include",
     next: {},
   };
+
+  // Ensuring browser auto-generates multipart/form-data boundary when handling FormData
+  if (isFormData) {
+    delete config.headers["Content-Type"];
+  }
 
   if (typeof revalidate === "number") {
     config.next.revalidate = revalidate;
@@ -25,7 +38,8 @@ async function request(
   }
 
   if (body) {
-    config.body = JSON.stringify(body);
+    // Passing raw FormData without JSON.stringify
+    config.body = isFormData ? body : JSON.stringify(body);
   }
 
   const res = await fetch(`${baseUrl}${endpoint}`, config);

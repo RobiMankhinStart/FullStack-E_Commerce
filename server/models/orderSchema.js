@@ -6,6 +6,9 @@ const orderItems = new mongoose.Schema({
     ref: "product",
     required: true,
   },
+  title: { type: String, required: true },
+  image: { type: String, required: true },
+  price: { type: Number, required: true },
   sku: {
     type: String,
     required: true,
@@ -25,7 +28,7 @@ const orderItems = new mongoose.Schema({
 const paymentSchema = new mongoose.Schema({
   method: {
     type: String,
-    enum: ["Stripe", "cash"],
+    enum: ["stripe", "Stripe", "cash"],
   },
   paymentId: String,
   sessionId: String, // Storing the Stripe Session ID here

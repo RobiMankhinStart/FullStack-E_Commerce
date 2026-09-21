@@ -8,9 +8,14 @@ var cookieParser = require("cookie-parser");
 const cloudinaryConfig = require("./services/CloudinaryConfig");
 const { stripeWebhook } = require("./controllers/webhook.controler");
 
-// 1. STRIPE WEBHOOK ROUTE (Must be defined before express.json)
+// 1. STRIPE WEBHOOK ROUTES (Must be defined before express.json)
 app.post(
   "/api/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook,
+);
+app.post(
+  "/api/v1/stripe/webhook",
   express.raw({ type: "application/json" }),
   stripeWebhook,
 );
