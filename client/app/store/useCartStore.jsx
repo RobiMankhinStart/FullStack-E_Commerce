@@ -119,6 +119,38 @@ const isUserLoggedIn = () => {
     .some((c) => c.trim().startsWith("X-AS-Token="));
 };
 
+const getUserRoleFromToken = () => {
+  if (typeof window === "undefined") return null;
+
+  const tokenCookie = document.cookie
+    .split(";")
+    .find((cookie) => cookie.trim().startsWith("X-AS-Token="));
+
+  if (!tokenCookie) return null;
+
+  try {
+    const token = decodeURIComponent(tokenCookie.split("=")[1]);
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+
+    const decoded = atob(padded);
+    const bytes = Uint8Array.from(decoded, (char) => char.charCodeAt(0));
+    const json = new TextDecoder().decode(bytes);
+    const parsed = JSON.parse(json);
+    return parsed?.role || null;
+  } catch (error) {
+    return null;
+  }
+};
+
+const isCartRestrictedRole = () => {
+  const role = getUserRoleFromToken();
+  return ["admin", "editor"].includes(String(role || "").toLowerCase());
+};
+
 export const useCartStore = create(
   persist(
     (set, get) => ({
@@ -163,6 +195,13 @@ export const useCartStore = create(
           if (get().lastCartClearAt > requestStartedAt) {
             return;
           }
+
+          const status = error?.status || error?.response?.status;
+          if (status === 401 || status === 403) {
+            set({ cartId: null, cartItems: [] });
+            return;
+          }
+
           console.error("Fetch cart error:", error);
           set({ cartItems: [] });
         } finally {
@@ -171,16 +210,68 @@ export const useCartStore = create(
       },
 
       // 2. ADD TO CART
-      addToCart: async (productId, sku, quantity = 1, productData = {}) => {
+      addToCart: async (
+        productIdOrPayload,
+        sku,
+        quantity = 1,
+        productData = {},
+      ) => {
+        if (isCartRestrictedRole()) {
+          toast.warning(
+            "Admin and editor accounts cannot add products to cart.",
+          );
+          return {
+            success: false,
+            message: "Admin and editor accounts cannot add products to cart.",
+          };
+        }
+
+        const payload =
+          typeof productIdOrPayload === "object" && productIdOrPayload !== null
+            ? {
+                productId:
+                  productIdOrPayload.productId ||
+                  productIdOrPayload._id ||
+                  productIdOrPayload.id,
+                sku: productIdOrPayload.sku,
+                quantity:
+                  Number(productIdOrPayload.quantity) > 0
+                    ? Number(productIdOrPayload.quantity)
+                    : Number(quantity),
+                productData:
+                  productIdOrPayload.product ||
+                  productIdOrPayload.productData ||
+                  productData,
+              }
+            : {
+                productId: productIdOrPayload,
+                sku,
+                quantity: Number(quantity) > 0 ? Number(quantity) : 1,
+                productData,
+              };
+
+        const normalizedProductId = payload.productId;
+        const normalizedSku = payload.sku;
+        const normalizedQuantity = payload.quantity;
+        const normalizedProductData = payload.productData || {};
+
+        if (!normalizedProductId || !normalizedSku) {
+          toast.error("Missing product or variant information");
+          return {
+            success: false,
+            message: "Missing product or variant information",
+          };
+        }
+
         get().openCart();
 
         if (isUserLoggedIn()) {
           // --- LOGGED-IN USER: Send to Express Backend ---
           try {
             const res = await apiClient.post("/cart/addtocart", {
-              productId,
-              sku,
-              quantity,
+              productId: normalizedProductId,
+              sku: normalizedSku,
+              quantity: normalizedQuantity,
             });
 
             if (res?.message) {
@@ -190,8 +281,23 @@ export const useCartStore = create(
             await get().fetchCart();
             return { success: true };
           } catch (error) {
-            console.error("Add to cart error:", error);
+            const status = error?.status || error?.response?.status;
             const errorMessage = error.message || "Failed to add to cart";
+
+            if (status === 401 || status === 403) {
+              toast.warning(
+                error?.data?.message ||
+                  "This account is not allowed to access cart actions.",
+              );
+              return {
+                success: false,
+                message:
+                  error?.data?.message ||
+                  "This account is not allowed to access cart actions.",
+              };
+            }
+
+            console.error("Add to cart error:", error);
 
             if (errorMessage === "Product already exists in cart") {
               await get().fetchCart();
@@ -211,8 +317,10 @@ export const useCartStore = create(
           const currentItems = get().cartItems;
           const existingIndex = currentItems.findIndex(
             (item) =>
-              (item.productId === productId || item._id === productId) &&
-              item.sku === sku,
+              (item.productId === normalizedProductId ||
+                item.product?._id === normalizedProductId ||
+                item._id === normalizedProductId) &&
+              item.sku === normalizedSku,
           );
 
           let updatedItems = [...currentItems];
@@ -224,10 +332,10 @@ export const useCartStore = create(
             // Append new item with minimal necessary structure for guest display
             updatedItems.push({
               _id: `guest_${Date.now()}`,
-              productId,
-              sku,
-              quantity,
-              product: productData,
+              productId: normalizedProductId,
+              sku: normalizedSku,
+              quantity: normalizedQuantity,
+              product: normalizedProductData,
             });
             toast.success("Item added to cart");
           }

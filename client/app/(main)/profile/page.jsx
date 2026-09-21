@@ -14,6 +14,9 @@ import {
   AlertCircle,
   Loader2,
   ShieldCheck,
+  Package,
+  Calendar,
+  ChevronRight,
 } from "lucide-react";
 import { apiClient } from "@/app/lib/apiClient";
 import Button from "@/app/components/commonUI/Button";
@@ -22,13 +25,16 @@ import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
 
 export default function ProfilePage() {
   const breadcrumbItems = [{ name: "Profile", href: "/profile" }];
-
   const router = useRouter();
   const fileInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
+
+  // Orders State
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
 
   // Form & User states
   const [formData, setFormData] = useState({
@@ -43,13 +49,14 @@ export default function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
 
-  // Fetch Profile Data
+  // Fetch Profile & Orders Data
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndOrders = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get("/auth/profile");
-        const userData = response?.data?.data || response?.data;
+        // Fetch Profile
+        const profileRes = await apiClient.get("/auth/profile");
+        const userData = profileRes?.data?.data || profileRes?.data;
 
         if (userData) {
           setFormData({
@@ -61,17 +68,30 @@ export default function ProfilePage() {
           });
           setAvatarUrl(userData.avatar || "");
         }
+
+        // Fetch Orders
+        setLoadingOrders(true);
+        const ordersRes = await apiClient.get("/order/my-orders");
+        const normalizedOrders = Array.isArray(ordersRes?.data)
+          ? ordersRes.data
+          : Array.isArray(ordersRes?.data?.data)
+            ? ordersRes.data.data
+            : [];
+
+        setOrders(normalizedOrders);
       } catch (error) {
-        console.error("Failed to load user profile:", error);
-        router.push("/signin");
+        console.error("Failed to load data:", error);
+        if (error?.response?.status === 401) {
+          router.push("/signin");
+        }
       } finally {
         setLoading(false);
+        setLoadingOrders(false);
       }
     };
 
-    fetchProfile();
+    fetchProfileAndOrders();
   }, [router]);
-
   // Handle avatar file selection & live preview
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
@@ -89,12 +109,10 @@ export default function ProfilePage() {
     }
   };
 
-  // Trigger hidden file input
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
-  // Submit profile updates
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -105,18 +123,9 @@ export default function ProfilePage() {
       data.append("fullname", formData.fullname);
       data.append("phone", formData.phone);
       data.append("address", formData.address);
-
-      if (avatarFile) {
-        data.append("avatar", avatarFile);
-      }
+      if (avatarFile) data.append("avatar", avatarFile);
 
       const response = await apiClient.put("/auth/updateprofile", data);
-      //   , {
-      //   headers: {
-      //     "Content-Type": "multipart/form-data",
-      //   },
-      // });
-
       const updatedUser = response?.data?.data || response?.data;
 
       if (updatedUser) {
@@ -126,9 +135,7 @@ export default function ProfilePage() {
           phone: updatedUser.phone || prev.phone,
           address: updatedUser.address || prev.address,
         }));
-        if (updatedUser.avatar) {
-          setAvatarUrl(updatedUser.avatar);
-        }
+        if (updatedUser.avatar) setAvatarUrl(updatedUser.avatar);
         setAvatarFile(null);
         setAvatarPreview(null);
         setFeedback({
@@ -137,7 +144,6 @@ export default function ProfilePage() {
         });
       }
     } catch (error) {
-      console.error("Update profile error:", error);
       setFeedback({
         type: "error",
         message:
@@ -166,18 +172,17 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-slate-50/50 py-10 px-4 sm:px-6 lg:px-8">
       <BreadCrumb items={breadcrumbItems} />
 
-      <div className="max-w-4xl mx-aut space-y-8">
-        {/* Header Title */}
+      <div className="max-w-4xl mx-auto space-y-8 mt-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">
             Account Settings
           </h1>
           <p className="text-sm text-slate-500 font-medium mt-1">
-            Manage your personal profile details and contact information.
+            Manage your personal profile details and view order history.
           </p>
         </div>
-
-        {/* Profile Card */}
+        {/* <div className="flex"> */}
+        {/* Profile Form Card */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -200,17 +205,13 @@ export default function ProfilePage() {
                   <User className="w-12 h-12 text-slate-300" />
                 )}
               </div>
-
-              {/* Upload Trigger Overlay */}
               <button
                 type="button"
                 onClick={triggerFileInput}
                 className="absolute inset-0 bg-slate-900/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white cursor-pointer"
-                aria-label="Upload Avatar"
               >
                 <Camera className="w-6 h-6" />
               </button>
-
               <input
                 ref={fileInputRef}
                 type="file"
@@ -236,7 +237,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Alert Messages */}
           {feedback.message && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
@@ -256,10 +256,8 @@ export default function ProfilePage() {
             </motion.div>
           )}
 
-          {/* Form Fields */}
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Full Name */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Full Name
@@ -275,8 +273,6 @@ export default function ProfilePage() {
                   required
                 />
               </div>
-
-              {/* Email (Read-Only) */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Email Address
@@ -289,8 +285,6 @@ export default function ProfilePage() {
                   className="bg-slate-100/60! text-slate-500! cursor-not-allowed!"
                 />
               </div>
-
-              {/* Phone Number */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Phone Number
@@ -305,8 +299,6 @@ export default function ProfilePage() {
                   leftIcon={<Phone className="w-4 h-4 text-slate-400" />}
                 />
               </div>
-
-              {/* Role Display */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Account Type
@@ -320,7 +312,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Address */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Shipping Address
@@ -341,7 +332,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-100">
               <Button
                 type="submit"
@@ -353,6 +343,88 @@ export default function ProfilePage() {
             </div>
           </form>
         </motion.div>
+
+        {/* Order List Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-10 shadow-xl shadow-slate-100/50"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+              <Package className="w-6 h-6 text-indigo-600" />
+              Order History
+            </h2>
+          </div>
+
+          {loadingOrders ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+              <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">
+                You haven&apos;t placed any orders yet.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {orders.map((order) => (
+                <div
+                  key={order._id}
+                  onClick={() => router.push(`/orders/${order._id}`)}
+                  className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-indigo-100 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                >
+                  <div className="space-y-2 mb-4 sm:mb-0">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-black text-slate-900 bg-slate-100 px-3 py-1 rounded-lg group-hover:bg-indigo-100 group-hover:text-indigo-700 transition-colors">
+                        {order.orderNumber}
+                      </span>
+                      {order.payment?.method === "stripe" ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                          Paid (Stripe)
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100">
+                          Cash on Delivery
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-xs font-semibold text-slate-500">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(order.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                      <span>•</span>
+                      <span>{order.items?.length || 0} Items</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
+                    <div className="text-left sm:text-right">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                        Total
+                      </p>
+                      <p className="text-lg font-black text-indigo-600">
+                        ৳{order.totalPrice}
+                      </p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-slate-50 group-hover:bg-indigo-600 flex items-center justify-center transition-colors shrink-0">
+                      <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+        {/* </div> */}
       </div>
     </div>
   );

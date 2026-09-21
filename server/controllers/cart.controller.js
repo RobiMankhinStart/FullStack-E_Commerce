@@ -6,6 +6,10 @@ const { isValidId } = require("../services/validation");
 
 const addToCart = async (req, res) => {
   try {
+    if (!req.user?._id) {
+      return sendResponse(res, 401, "Unauthorized user");
+    }
+
     const { productId, sku, quantity } = req.body;
     if (!productId || !sku || !quantity)
       return sendResponse(res, 400, "Invalid request");
@@ -113,6 +117,10 @@ const addToCart = async (req, res) => {
 
 const getUserCart = async (req, res) => {
   try {
+    if (!req.user?._id) {
+      return sendResponse(res, 401, "Unauthorized user");
+    }
+
     const cart = await cartSchema
       .findOne({ user: req.user._id })
       .populate(
@@ -134,6 +142,10 @@ const getUserCart = async (req, res) => {
 
 const updateCart = async (req, res) => {
   try {
+    if (!req.user?._id) {
+      return sendResponse(res, 401, "Unauthorized user");
+    }
+
     const { productId, itemId, quantity } = req.body;
 
     if (!isValidId([productId, itemId]))
@@ -179,6 +191,10 @@ const updateCart = async (req, res) => {
 
 const removeFromCart = async (req, res) => {
   try {
+    if (!req.user?._id) {
+      return sendResponse(res, 401, "Unauthorized user");
+    }
+
     const { itemId } = req.body;
 
     if (!isValidId([itemId]))
@@ -211,6 +227,10 @@ const removeFromCart = async (req, res) => {
 
 const clearUserCart = async (req, res) => {
   try {
+    if (!req.user?._id) {
+      return sendResponse(res, 401, "Unauthorized user");
+    }
+
     const cart = await cartSchema.findOne({ user: req.user._id });
 
     if (!cart) {

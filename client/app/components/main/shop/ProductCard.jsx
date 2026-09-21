@@ -7,6 +7,34 @@ import { toast } from "sonner";
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCartStore();
+  const isCartDisabledForRole = (() => {
+    if (typeof window === "undefined") return false;
+
+    const tokenCookie = document.cookie
+      .split(";")
+      .find((cookie) => cookie.trim().startsWith("X-AS-Token="));
+
+    if (!tokenCookie) return false;
+
+    try {
+      const token = decodeURIComponent(tokenCookie.split("=")[1]);
+      const payload = token.split(".")[1];
+      if (!payload) return false;
+
+      const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized.padEnd(
+        Math.ceil(normalized.length / 4) * 4,
+        "=",
+      );
+      const decoded = atob(padded);
+      const bytes = Uint8Array.from(decoded, (char) => char.charCodeAt(0));
+      const json = new TextDecoder().decode(bytes);
+      const role = JSON.parse(json)?.role;
+      return ["admin", "editor"].includes(String(role || "").toLowerCase());
+    } catch (error) {
+      return false;
+    }
+  })();
 
   const originalPrice = product.price || 0;
   const discount = product.discountPercentage || 0;
@@ -27,6 +55,11 @@ export default function ProductCard({ product }) {
     // Prevent the click from bubbling up to the Link component
     e.preventDefault();
     e.stopPropagation();
+
+    if (isCartDisabledForRole) {
+      toast.warning("Admin and editor accounts cannot add products to cart.");
+      return;
+    }
 
     const selectedSku = product.variants?.[0]?.sku || product.sku;
 
@@ -96,9 +129,22 @@ export default function ProductCard({ product }) {
           {/* Modern Circular Cart Button */}
           <button
             onClick={handleAddToCart}
-            className="flex items-center justify-center bg-black hover:bg-gray-800 text-white w-9 h-9 rounded-full transition-all active:scale-90"
-            aria-label="Add to cart"
-            title="Add to cart"
+            disabled={isCartDisabledForRole}
+            className={`flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90 ${
+              isCartDisabledForRole
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-black hover:bg-gray-800 text-white"
+            }`}
+            aria-label={
+              isCartDisabledForRole
+                ? "Cart unavailable for this role"
+                : "Add to cart"
+            }
+            title={
+              isCartDisabledForRole
+                ? "Cart unavailable for this role"
+                : "Add to cart"
+            }
           >
             {/* Sleek Shopping Bag Icon */}
             <svg

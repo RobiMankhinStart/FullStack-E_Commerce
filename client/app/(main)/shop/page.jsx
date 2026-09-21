@@ -47,6 +47,7 @@ const ShopPage = async ({ searchParams }) => {
 
   // extracting backend data
   const products = res?.data?.productList || [];
+  console.log("products :", products);
   const Pagination = res?.data?.pagination || {
     totalPages: 1,
     total: 0,
