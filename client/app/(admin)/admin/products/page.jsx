@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { FiStar } from "react-icons/fi";
 import Button from "@/app/components/commonUI/Button";
-import { MOCK_PRODUCTS } from "@/app/lib/mockData";
 import { useGetProductListQuery } from "../../services/api";
 import { Plus } from "lucide-react";
 
@@ -89,9 +88,11 @@ export default function ProductsPage() {
                     ) : null}
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      Edit
-                    </Button>
+                    <Link href={`/admin/products/${product.slug}`}>
+                      <Button variant="outline" size="sm">
+                        Edit
+                      </Button>
+                    </Link>
                     <Button variant="ghost" size="sm">
                       Delete
                     </Button>

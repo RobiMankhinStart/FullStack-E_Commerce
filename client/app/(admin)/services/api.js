@@ -54,6 +54,27 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["product"],
     }),
+    getProductDetails: build.query({
+      query: (slug) => ({
+        url: `/product/${slug}`,
+        method: "GET",
+      }),
+      providesTags: (result, error, slug) => [{ type: "product", id: slug }],
+    }),
+
+    // 2. Updating existing product
+    updateProduct: build.mutation({
+      query: ({ slug, formData }) => ({
+        url: `/product/updateproduct/${slug}`,
+        method: "PUT",
+        body: formData, // FormData instance
+      }),
+      invalidatesTags: (result, error, { slug }) => [
+        "product",
+        { type: "product", id: slug },
+      ],
+    }),
+
     signout: build.mutation({
       query: () => ({
         url: "/auth/signout",
@@ -69,6 +90,8 @@ export const adminApi = createApi({
 export const {
   useGetProductListQuery,
   useGetCategoryListQuery,
+  useGetProductDetailsQuery,
   useCreateNewProductMutation,
+  useUpdateProductMutation,
   useSignoutMutation,
 } = adminApi;
