@@ -29,7 +29,7 @@ const baseQueryWithAuth = async (args, api, extraOptions) => {
 
 export const adminApi = createApi({
   baseQuery: baseQueryWithAuth,
-  tagTypes: ["product", "category"],
+  tagTypes: ["product", "category", "orders"],
   endpoints: (build) => ({
     getProductList: build.query({
       query: () => ({
@@ -81,6 +81,31 @@ export const adminApi = createApi({
         method: "POST",
       }),
     }),
+
+    // Add inside your createApi builder endpoints:
+    getAllOrdersForAdmin: build.query({
+      query: ({ page = 1, limit = 10, status = "", search = "" }) => {
+        const params = new URLSearchParams({ page, limit });
+        if (status) params.append("status", status);
+        if (search) params.append("search", search);
+        return {
+          url: `/order/orderlist?${params.toString()}`,
+          method: "GET",
+        };
+      },
+      providesTags: ["orders"],
+    }),
+
+    // MUTATION FOR STATUS UPDATE
+    updateOrderStatus: build.mutation({
+      query: ({ orderId, status }) => ({
+        url: `/order/update-status/${orderId}`,
+        method: "PATCH",
+        body: { status },
+      }),
+      invalidatesTags: ["orders"], // Triggers auto-refetch of orders list
+    }),
+
     // alternative easy approach for get method below
     getProducts: build.query({
       query: () => "/products/productlist",
@@ -91,7 +116,9 @@ export const {
   useGetProductListQuery,
   useGetCategoryListQuery,
   useGetProductDetailsQuery,
+  useGetAllOrdersForAdminQuery,
   useCreateNewProductMutation,
   useUpdateProductMutation,
   useSignoutMutation,
+  useUpdateOrderStatusMutation,
 } = adminApi;

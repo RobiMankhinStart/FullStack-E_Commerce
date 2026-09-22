@@ -226,4 +226,164 @@ const getOrderById = async (req, res) => {
     return sendResponse(res, 500, "Internal server error");
   }
 };
-module.exports = { checkOut, getMyOrders, getOrderById };
+
+// Controller to Fetch All Orders for Admin
+const getAllOrdersForAdmin = async (req, res) => {
+  try {
+    // 1. Extract and sanitize query parameters
+    const { page = 1, limit = 10, status, paymentStatus, search } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.max(1, parseInt(limit, 10) || 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // 2. Build dynamic filter query
+    const query = {};
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (paymentStatus) {
+      query["payment.status"] = paymentStatus;
+    }
+
+    if (search && search.trim() !== "") {
+      query.orderNumber = { $regex: search.trim(), $options: "i" };
+    }
+
+    // 3. Execute main orders query with pagination & population
+    const [orders, totalOrders] = await Promise.all([
+      orderSchema
+        .find(query)
+        .populate("user", "name email phone role")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      orderSchema.countDocuments(query),
+    ]);
+
+    // 4. Calculate Global Summary Statistics using MongoDB Aggregation
+    const summaryData = await orderSchema.aggregate([
+      {
+        $facet: {
+          totalRevenue: [
+            { $match: { "payment.status": "paid" } },
+            { $group: { _id: null, total: { $sum: "$totalPrice" } } },
+          ],
+          statusCounts: [
+            {
+              $group: {
+                _id: "$status",
+                count: { $sum: 1 },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    // Format aggregation results
+    const rawRevenue = summaryData[0]?.totalRevenue[0]?.total || 0;
+    const statusMap = (summaryData[0]?.statusCounts || []).reduce(
+      (acc, curr) => {
+        acc[curr._id] = curr.count;
+        return acc;
+      },
+      {},
+    );
+
+    const summary = {
+      totalRevenue: rawRevenue,
+      pendingCount: statusMap["pending"] || 0,
+      confirmedCount: statusMap["confirmed"] || 0,
+      shippedCount: statusMap["shipped"] || 0,
+      deliveredCount: statusMap["delivered"] || 0,
+      cancelledCount: statusMap["cancelled"] || 0,
+    };
+
+    // 5. Build pagination response object
+    const totalPages = Math.ceil(totalOrders / limitNum) || 1;
+    const pagination = {
+      totalOrders,
+      currentPage: pageNum,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1,
+    };
+
+    // 6. Return response
+    return sendResponse(res, 200, "All orders fetched successfully", {
+      orders,
+      summary,
+      pagination,
+    });
+  } catch (error) {
+    console.error("getAllOrdersForAdmin Error:", error);
+    return sendResponse(res, 500, "Internal server error");
+  }
+};
+
+// Update Order Status (Admin / Editor)
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // 1. Validate status against schema enum
+    const allowedStatuses = [
+      "pending",
+      "confirmed",
+      "shipped",
+      "delivered",
+      "cancelled",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status value. Must be one of: ${allowedStatuses.join(", ")}`,
+      });
+    }
+
+    // 2. Prepare payload
+    const updateData = { status };
+    if (status === "delivered") {
+      updateData.deliveredAt = new Date();
+    }
+
+    // 3. Update order in database
+    const updatedOrder = await orderSchema.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Order status updated to '${status}' successfully`,
+      data: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while updating order status",
+      error: error.message,
+    });
+  }
+};
+module.exports = {
+  checkOut,
+  getMyOrders,
+  getOrderById,
+  getAllOrdersForAdmin,
+  updateOrderStatus,
+};

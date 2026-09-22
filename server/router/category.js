@@ -13,7 +13,7 @@ const route = express.Router();
 route.post(
   "/create",
   authMiddleware,
-  roleCheckMiddleware("admin"),
+  roleCheckMiddleware("admin", "editor"),
   upload.single("thumbnail"),
   createCategory,
 );
