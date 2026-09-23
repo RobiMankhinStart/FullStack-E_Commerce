@@ -8,13 +8,42 @@ import { apiClient } from "@/app/lib/apiClient";
 import NewArrivalsSlider from "../components/main/NewArrivalsSlider";
 
 const HomePage = async () => {
-  const [categoryRes, productRes] = await Promise.all([
-    apiClient.get("/category/all", { revalidate: 60 }),
-    apiClient.get("/product/productlist?limit=5", { revalidate: 60 }),
-  ]);
+  let categories = [];
+  let products = [];
 
-  const categories = categoryRes?.data || [];
-  const products = productRes?.data?.productList || [];
+  try {
+    // Catch fetch errors individually so one failing request doesn't crash the other
+    const [categoryRes, productRes] = await Promise.all([
+      apiClient.get("/category/all", { revalidate: 60 }).catch((err) => {
+        console.error("Failed to fetch categories:", err?.message || err);
+        return null;
+      }),
+      apiClient
+        .get("/product/productlist?limit=5", { revalidate: 60 })
+        .catch((err) => {
+          console.error("Failed to fetch products:", err?.message || err);
+          return null;
+        }),
+    ]);
+
+    // Handle multiple backend response structures safely
+    if (categoryRes) {
+      categories = Array.isArray(categoryRes)
+        ? categoryRes
+        : categoryRes?.data || categoryRes?.categories || [];
+    }
+
+    if (productRes) {
+      products = Array.isArray(productRes)
+        ? productRes
+        : productRes?.data?.productList ||
+          productRes?.productList ||
+          productRes?.products ||
+          [];
+    }
+  } catch (error) {
+    console.error("Unhandled error on homepage SSR:", error);
+  }
 
   const editorialCards = [
     {
@@ -116,7 +145,7 @@ const HomePage = async () => {
               <div className="absolute inset-0">
                 <Image
                   src={category.thumbnail || "/coverpic6.jpg"}
-                  alt={category.name}
+                  alt={category.name || "Category"}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
