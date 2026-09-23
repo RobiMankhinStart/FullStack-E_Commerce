@@ -18,7 +18,13 @@ const CartItem = ({ item, onUpdateQuantity, onRemoveItem }) => {
       {/* Item Image */}
       <div className="relative p-10 w-16 h-24 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
         {image ? (
-          <Image src={image} alt={title} fill className="object-cover" />
+          <Image
+            src={image}
+            alt={title}
+            fill
+            sizes="64px"
+            className="object-cover"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-300">
             IMG

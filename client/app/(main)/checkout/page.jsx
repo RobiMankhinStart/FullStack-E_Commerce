@@ -479,9 +479,22 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const isUserAuthenticated = () => {
+    if (typeof document === "undefined") return false;
+    return document.cookie
+      .split(";")
+      .some((cookie) => cookie.trim().startsWith("X-AS-Token="));
+  };
+
   useEffect(() => {
+    if (!isUserAuthenticated()) {
+      toast.warning("Please sign in to continue with checkout.");
+      router.replace("/signin?redirect=/checkout");
+      return;
+    }
+
     fetchCart();
-  }, [fetchCart]);
+  }, [fetchCart, router]);
 
   const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
 
@@ -499,6 +512,12 @@ export default function CheckoutPage() {
 
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
+
+    if (!isUserAuthenticated()) {
+      toast.warning("Please sign in to continue with checkout.");
+      router.replace("/signin?redirect=/checkout");
+      return;
+    }
 
     if (!shippingAddress.trim()) {
       setError("Please provide a delivery address.");

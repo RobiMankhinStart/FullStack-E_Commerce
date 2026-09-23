@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { apiClient } from "@/app/lib/apiClient";
 import BreadCrumb from "@/app/components/commonUI/BreadCrumb";
 import { notFound } from "next/navigation";

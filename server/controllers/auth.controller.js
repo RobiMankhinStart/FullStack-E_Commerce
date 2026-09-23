@@ -17,6 +17,18 @@ const {
 const sendResponse = require("../services/sendResponse");
 const { isValidEmail, isValidPass } = require("../services/validation");
 
+const getCookieOptions = (req) => {
+  const origin = req.headers.origin || process.env.CLIENT_URL || "";
+  const isSecureContext = /^https:/i.test(origin) || process.env.VERCEL === "1";
+
+  return {
+    httpOnly: false,
+    secure: isSecureContext,
+    sameSite: isSecureContext ? "none" : "lax",
+    path: "/",
+  };
+};
+
 const signUp = async (req, res) => {
   try {
     const { fullname, email, password, address, phone } = req.body;
@@ -162,23 +174,21 @@ const signIn = async (req, res) => {
 
     const acc_token = generateAccTok(existUser);
     const REF_token = generateRefreshTok(existUser);
-    // console.log("acc_Tok :", acc_token);
-    // console.log("REF_Tok :", REF_token);
+    const cookieOptions = getCookieOptions(req);
+
     res.cookie("X-AS-Token", acc_token, {
-      maxAge: 172800000, // 48 hours
-      httpOnly: false, // Security: prevent JS access
-      secure: false, // Security: HTTPS only
-      // sameSite: "lax", // CSRF protection
+      ...cookieOptions,
+      maxAge: 172800000,
     });
     res.cookie("X-RF-Token", REF_token, {
-      maxAge: 12966000000, // 15 days
-      httpOnly: false, // Security: prevent JS access
-      secure: false, // Security: HTTPS only
-      // sameSite: "lax", // CSRF protection
+      ...cookieOptions,
+      maxAge: 12966000000,
     });
+
     return sendResponse(res, 200, "Sign in successful", {
       userId: existUser._id,
       fullname: existUser.fullname,
+      role: existUser.role,
     });
   } catch (error) {
     console.log(error);
@@ -317,23 +327,25 @@ const updateProfile = async (req, res) => {
 const refreshAccessToken = async (req, res) => {
   try {
     const refreshToken =
-      req.cookies?.["X-RF-Token"] || req.headers.authorization;
+      req.cookies?.["X-RF-Token"] ||
+      (req.headers.authorization?.startsWith("Bearer ")
+        ? req.headers.authorization.split(" ")[1]
+        : null);
 
     if (!refreshToken) {
       return sendResponse(res, 400, "Refresh token missing");
     }
 
     const decoded = verifyToken(refreshToken);
-    if (!decoded) return (res, 400, "unauthorized request");
+    if (!decoded) return sendResponse(res, 400, "unauthorized request");
 
     const accessToken = generateAccTok(decoded);
+    const cookieOptions = getCookieOptions(req);
 
     res
       .cookie("X-AS-Token", accessToken, {
-        maxAge: 172800000, // 48 hours
-        httpOnly: false, // Security: prevent JS access
-        secure: false, // Security: HTTPS only
-        // sameSite: "lax", // CSRF protection
+        ...cookieOptions,
+        maxAge: 172800000,
       })
       .send({ success: true });
   } catch (error) {
@@ -343,17 +355,11 @@ const refreshAccessToken = async (req, res) => {
 };
 
 const signOut = async (req, res) => {
-  // clearing cookies
   try {
-    res.clearCookie("X-RF-Token", {
-      httpOnly: false,
-      secure: false,
-    });
+    const cookieOptions = getCookieOptions(req);
 
-    res.clearCookie("X-AS-Token", {
-      httpOnly: false,
-      secure: false,
-    });
+    res.clearCookie("X-RF-Token", cookieOptions);
+    res.clearCookie("X-AS-Token", cookieOptions);
 
     return sendResponse(res, 200, "Signed out successfully");
   } catch (error) {

@@ -75,9 +75,13 @@ export default function VerifyOtpPage() {
       return;
     }
 
+    const backendBaseUrl =
+      process.env.NEXT_PUBLIC_SERVER_API ||
+      "https://full-stack-backend-e-commerce.vercel.app";
+
     setResending(true);
     try {
-      const response = await fetch("http://localhost:8000/auth/resendotp", {
+      const response = await fetch(`${backendBaseUrl}/auth/resendotp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email.trim() }),

@@ -28,26 +28,49 @@ app.use(cookieParser());
 // 2. CORS CONFIGURATION (Supports multiple origins)
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  process.env.CLIENT_URL?.replace(/\/$/, ""),
   "https://full-stack-client-e-commerce.vercel.app",
+  "https://full-stack-e-commerce-fawn-delta.vercel.app",
   "http://localhost:5173",
   "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
         return callback(null, true);
       }
-      return callback(null, true); // Fallback for Vercel deployment previews
+
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      const isAllowedVercelPreview = /https:\/\/.*\.vercel\.app$/.test(
+        normalizedOrigin,
+      );
+
+      if (allowedOrigins.includes(normalizedOrigin) || isAllowedVercelPreview) {
+        return callback(null, normalizedOrigin);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-AS-Token"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-AS-Token",
+      "X-RF-Token",
+    ],
+    exposedHeaders: ["Set-Cookie"],
+    optionsSuccessStatus: 204,
   }),
 );
-dbConfig();
+dbConfig().catch((error) => {
+  console.error("Database connection failed:", error.message || error);
+});
 cloudinaryConfig();
 app.use(express.json());
 

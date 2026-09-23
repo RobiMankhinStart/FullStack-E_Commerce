@@ -1,4 +1,4 @@
-// export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic";
 import Form from "next/form";
 import React from "react";
 import Link from "next/link";

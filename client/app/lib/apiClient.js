@@ -1,8 +1,10 @@
-import next from "next";
-
 const baseUrl =
   process.env.NEXT_PUBLIC_SERVER_API ||
   "https://full-stack-backend-e-commerce.vercel.app";
+
+const REQUEST_TIMEOUT_MS = Number(
+  process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 8000,
+);
 
 async function request(
   endpoint,
@@ -24,6 +26,7 @@ async function request(
     },
     credentials: "include",
     next: {},
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   };
 
   // Ensuring browser auto-generates multipart/form-data boundary when handling FormData
@@ -40,29 +43,41 @@ async function request(
   }
 
   if (body) {
-    // Passing raw FormData without JSON.stringify
     config.body = isFormData ? body : JSON.stringify(body);
   }
 
-  const res = await fetch(`${baseUrl}${endpoint}`, config);
+  try {
+    const res = await fetch(`${baseUrl}${endpoint}`, config);
 
-  let data;
-  const contentType = res.headers.get("content-type");
+    let data;
+    const contentType = res.headers.get("content-type");
 
-  if (contentType?.includes("application/json")) {
-    data = await res.json();
-  } else {
-    data = await res.text();
-  }
+    if (contentType?.includes("application/json")) {
+      data = await res.json();
+    } else {
+      data = await res.text();
+    }
 
-  if (!res.ok) {
-    const error = new Error(data?.message || "API request failed");
-    error.status = res.status;
-    error.data = data;
+    if (!res.ok) {
+      const error = new Error(data?.message || "API request failed");
+      error.status = res.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    if (error?.name === "TimeoutError") {
+      const timedOutError = new Error(
+        `Request to ${baseUrl}${endpoint} timed out after ${REQUEST_TIMEOUT_MS}ms`,
+      );
+      timedOutError.status = 504;
+      timedOutError.data = { message: "Backend request timed out" };
+      throw timedOutError;
+    }
+
     throw error;
-    // throw new Error(data?.message || "API request failed");
   }
-  return data;
 }
 
 export const apiClient = {
