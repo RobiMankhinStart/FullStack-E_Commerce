@@ -2,209 +2,258 @@ export const dynamic = "force-dynamic";
 
 import React from "react";
 import Image from "next/image";
-import Button from "../components/commonUI/Button";
 import Link from "next/link";
 import HeroSlider from "../components/main/HeroSlider";
-// import { apiClient } from "@/app/lib/apiClient";
+import { apiClient } from "@/app/lib/apiClient";
+import NewArrivalsSlider from "../components/main/NewArrivalsSlider";
 
 const HomePage = async () => {
-  // const productResponse = await apiClient.get("/product/allproducts?limit=5", {
-  //   revalidate: 60 * 5,
-  // });
-  // const products = productResponse?.data?.products || [];
+  const [categoryRes, productRes] = await Promise.all([
+    apiClient.get("/category/all", { revalidate: 60 }),
+    apiClient.get("/product/productlist?limit=5", { revalidate: 60 }),
+  ]);
+
+  const categories = categoryRes?.data || [];
+  const products = productRes?.data?.productList || [];
+
+  const editorialCards = [
+    {
+      title: "Soft Tailoring",
+      subtitle: "Polished layers for everyday elegance.",
+      image: "/coverpic5.jpg",
+      accent: "from-rose-500/30 to-orange-500/20",
+      badge: "New in",
+      layout: "lg:col-span-2 lg:row-span-2 min-h-[500px]",
+    },
+    {
+      title: "City Layers",
+      subtitle: "Built for movement and late-night plans.",
+      image: "/coverpic2.jpg",
+      accent: "from-indigo-500/30 to-sky-500/20",
+      badge: "Street edit",
+      layout: "min-h-[240px]",
+    },
+    {
+      title: "Weekend Uniform",
+      subtitle: "Elevated basics for low-effort styling.",
+      image: "/coverpic4.jfif",
+      accent: "from-emerald-500/30 to-teal-500/20",
+      badge: "Easy wear",
+      layout: "min-h-[240px]",
+    },
+    {
+      title: "New Neutrals",
+      subtitle: "Minimal shades with a confident finish.",
+      image: "/coverpic1.avif",
+      accent: "from-slate-800/50 to-slate-500/15",
+      badge: "Warm tones",
+      layout: "lg:col-span-2 min-h-[260px]",
+    },
+  ];
 
   return (
-    <>
-      {/* Hero Section */}
+    <div className="bg-slate-50 text-slate-900">
       <HeroSlider />
 
-      {/* Shop by Intent / Categories */}
-      <section className="px-8 mt-4 max-w-screen-2xl mx-auto w-full">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+      <section className="px-4 sm:px-6 lg:px-8 py-8 md:py-12 max-w-screen-2xl mx-auto w-full">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-8">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-2 block">
-              Categories
+            <span className="text-[10px] font-bold uppercase tracking-[0.28rem] text-indigo-600">
+              Shop by mood
             </span>
-            <h2 className="text-4xl font-bold text-slate-900 tracking-tight">
-              Shop by Intent
+            <h2 className="mt-2 text-3xl md:text-5xl font-black tracking-tight text-slate-900">
+              Discover your next favorite fit
             </h2>
           </div>
-          {/* <button className="text-sm font-bold flex items-center gap-2 hover:text-indigo-600 transition-colors">
-            All Categories <span>→</span>
-          </button> */}
-          <Button
-            variant="ghost"
-            size="sm"
-            rightIcon={<span>→</span>}
-            className="font-bold hover:text-indigo-600 hover:bg-transparent"
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-700 hover:text-indigo-600 transition-colors"
           >
-            All Categories
-          </Button>
+            Browse all collections
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
 
-        {/* MAIN parent container controls the structural bounding box heights safely */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-auto md:h-[500px] lg:h-[600px]">
-          {/* Living Card (Left Side) - Takes half the grid width */}
-          <div className="md:col-span-2 relative group overflow-hidden rounded-2xl bg-slate-900 min-h-[350px] md:min-h-full">
-            <Image
-              fill
-              priority
-              src="https://images.unsplash.com/photo-1484101403633-562f891dc89a?q=80&w=1200"
-              alt="Living"
-              className="object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 p-10 flex flex-col justify-end z-10">
-              <h3 className="text-3xl font-bold text-white mb-2">Living</h3>
-              <p className="text-slate-200 text-sm max-w-xs">
-                Elevated environments for daily rituals.
-              </p>
-            </div>
-          </div>
-
-          {/* Right Side Complex Grid - Fixed to use a flexible flex column layout to avoid row collapses */}
-          <div className="md:col-span-2 flex flex-col gap-4 h-full min-h-[500px] md:min-h-0">
-            {/* Apparel Card (Top half) */}
-            <div className="flex-1 relative group overflow-hidden rounded-2xl bg-orange-100 min-h-[200px] md:min-h-0">
-              <Image
-                fill
-                src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=1200"
-                alt="Apparel"
-                className="object-cover group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 p-8 flex flex-col justify-end z-10">
-                <h3 className="text-2xl font-bold text-slate-900">Apparel</h3>
-              </div>
-            </div>
-
-            {/* Objects & Footwear Split Grid (Bottom half) */}
-            <div className="flex-1 grid grid-cols-2 gap-4 min-h-[200px] md:min-h-0">
-              {/* Objects Card */}
-              <div className="relative group overflow-hidden rounded-2xl bg-slate-100 h-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {(categories.length > 0
+            ? categories
+            : [
+                {
+                  _id: "women",
+                  name: "Women",
+                  slug: "women",
+                  description: "Light layers & elevated essentials",
+                  thumbnail: "/coverpic6.jpg",
+                },
+                {
+                  _id: "men",
+                  name: "Men",
+                  slug: "men",
+                  description: "Clean silhouettes with everyday comfort",
+                  thumbnail: "/coverpic7.jpg",
+                },
+                {
+                  _id: "essentials",
+                  name: "Essentials",
+                  slug: "essentials",
+                  description: "Wardrobe staples built for daily rotation",
+                  thumbnail: "/coverpic8.jpg",
+                },
+                {
+                  _id: "accessories",
+                  name: "Accessories",
+                  slug: "accessories",
+                  description: "Finishing pieces that complete every look",
+                  thumbnail: "/coverepic9.jpg",
+                },
+              ]
+          ).map((category) => (
+            <Link
+              key={category._id}
+              href={`/shop?category=${encodeURIComponent(category.slug || category.name.toLowerCase())}`}
+              className="group relative overflow-hidden rounded-[28px] min-h-[340px] border border-slate-200 bg-white shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl"
+            >
+              <div className="absolute inset-0">
                 <Image
+                  src={category.thumbnail || "/coverpic6.jpg"}
+                  alt={category.name}
                   fill
-                  src="https://images.unsplash.com/photo-1581591524425-c7e0978865fc?q=80&w=600"
-                  alt="Objects"
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 p-6 flex flex-col justify-end z-10">
-                  <h3 className="text-xl font-bold text-slate-900">Objects</h3>
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-slate-500/10" />
               </div>
 
-              {/* Footwear Card */}
-              <div className="relative group overflow-hidden rounded-2xl bg-slate-200 h-full">
-                <Image
-                  fill
-                  src="https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600"
-                  alt="Footwear"
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 p-6 flex flex-col justify-end z-10">
-                  <h3 className="text-xl font-bold text-slate-900">Footwear</h3>
-                </div>
+              <div className="relative z-10 flex h-full flex-col justify-end p-6 text-white">
+                <span className="mb-2 inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24rem] backdrop-blur-sm">
+                  {category.name}
+                </span>
+                <h3 className="text-2xl font-black tracking-tight">
+                  {category.name}
+                </h3>
+                <p className="mt-2 max-w-xs text-sm text-slate-200">
+                  {category.description || "Fresh essentials for every day."}
+                </p>
               </div>
-            </div>
-          </div>
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* New Arrivals */}
-      <section className="px-8 max-w-screen-2xl mx-auto mt-2 w-full">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-10">
-          <h2 className="text-4xl font-bold text-slate-900 tracking-tight">
-            New Arrivals
-          </h2>
-          <div className="flex gap-2">
-            <button className="p-3 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors">
-              ←
-            </button>
-            <button className="p-3 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors">
-              →
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
-          {/* {products.length > 0 ? (
-            products.map((product) => (
-              <Link
-                key={product._id}
-                href={`/shop/${product.slug}`}
-                className="group cursor-pointer"
-              >
-                <div className="aspect-[3/4] rounded-2xl bg-slate-100 overflow-hidden mb-4 relative">
-                  <Image
-                    fill
-                    src={product.thumbnail || "/placeholder-image.jpg"}
-                    alt={product.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight">
-                    {product.tags?.[0] || "New"}
-                  </div>
-                </div>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                      {product.title}
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                      {product.description?.slice(0, 70) ||
-                        "Modern essentials for elevated living."}
-                    </p>
-                  </div>
-                  <span className="font-bold text-slate-900">
-                    ${product.price?.toLocaleString()}
-                  </span>
-                </div>
-              </Link>
-            ))
-          ) : (
-            <div className="col-span-full rounded-3xl bg-white p-12 shadow-sm border border-slate-200 text-center">
-              <h3 className="text-2xl font-black text-slate-900 mb-3">
-                No new arrivals found
-              </h3>
-              <p className="text-slate-500">
-                Check back soon for the latest curated pieces.
-              </p>
-            </div>
-          )} */}
-        </div>
-      </section>
-
-      {/* Editorial / CTA */}
-      <section className="px-8 max-w-screen-2xl mx-auto w-full">
-        <div className="bg-indigo-600 rounded-3xl overflow-hidden flex flex-col md:flex-row min-h-[400px] md:min-h-[500px]">
-          <div className="flex-1 p-16 flex flex-col justify-center">
-            <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest mb-4">
-              Summer Editorial
+      <section
+        id="curated-edits"
+        className="px-4 sm:px-6 lg:px-8 py-8 md:py-12 max-w-screen-2xl mx-auto w-full"
+      >
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.28rem] text-indigo-600">
+              Curated edits
             </span>
-            <h2 className="text-5xl md:text-6xl font-black text-white leading-tight mb-6">
-              The Art of <br /> Living Well
+            <h2 className="mt-2 text-3xl md:text-5xl font-black tracking-tight text-slate-900">
+              Built for movement, comfort, and style
             </h2>
-            <p className="text-white/80 text-lg mb-10 max-w-lg">
-              Join our newsletter for early access to the upcoming capsule
-              collection and exclusive editorial content.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md">
-              <input
-                type="email"
-                placeholder="email@example.com"
-                className="flex-1 px-6 py-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 ring-white/30"
-              />
-              <button className="w-full sm:w-auto bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold hover:bg-indigo-50 transition-colors whitespace-nowrap">
-                Subscribe
-              </button>
-            </div>
           </div>
-          <div className="flex-1 bg-slate-950 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-40 mix-blend-overlay">
-              <div className="w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500 via-transparent to-transparent"></div>
+          <p className="max-w-xl text-sm md:text-base text-slate-600">
+            Thoughtful silhouettes, premium textures, and wardrobe pieces you
+            can wear from morning coffee to late-night plans.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4 auto-rows-[260px]">
+          {editorialCards.map((card) => (
+            <div
+              key={card.title}
+              className={`group relative overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm ${card.layout}`}
+            >
+              <div className="absolute inset-0">
+                <Image
+                  src={card.image}
+                  alt={card.title}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div
+                  className={`absolute inset-0 bg-gradient-to-t ${card.accent}`}
+                />
+              </div>
+
+              <div className="relative z-10 flex h-full flex-col justify-end p-6 md:p-8">
+                <span className="mb-3 inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24rem] text-white backdrop-blur-sm">
+                  {card.badge}
+                </span>
+                <h3 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+                  {card.title}
+                </h3>
+                <p className="mt-2 max-w-xs text-sm text-slate-100">
+                  {card.subtitle}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-4 sm:px-6 lg:px-8 py-8 md:py-12 max-w-screen-2xl mx-auto w-full">
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.28rem] text-indigo-600">
+              New arrivals
+            </span>
+            <h2 className="mt-2 text-3xl md:text-5xl font-black tracking-tight text-slate-900">
+              Fresh pieces for the season
+            </h2>
+          </div>
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-700 hover:text-indigo-600 transition-colors"
+          >
+            View collection
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+
+        <NewArrivalsSlider products={products} />
+      </section>
+
+      <section className="px-4 sm:px-6 lg:px-8 pb-16 md:pb-24 max-w-screen-2xl mx-auto w-full">
+        <div className="overflow-hidden rounded-[36px] bg-slate-900 text-white shadow-2xl shadow-slate-200/80">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="flex flex-col justify-center p-8 md:p-14">
+              <span className="mb-4 inline-flex w-fit rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28rem] text-slate-200">
+                Join the list
+              </span>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-none">
+                Style notes <br /> for smarter shopping.
+              </h2>
+              <p className="mt-5 max-w-lg text-base md:text-lg text-slate-300">
+                Subscribe for early access, curated drops, and exclusive offers
+                on our latest collections.
+              </p>
+
+              <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-xl">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-5 py-4 text-base text-white placeholder:text-slate-400 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+                />
+                <button className="rounded-2xl bg-white px-6 py-4 text-sm font-black text-slate-900 transition-colors hover:bg-indigo-100">
+                  Subscribe now
+                </button>
+              </div>
+            </div>
+
+            <div className="relative min-h-[320px] lg:min-h-[500px]">
+              <Image
+                src="/coverpic6.jpg"
+                alt="Fashion editorial"
+                fill
+                className="object-cover opacity-80"
+              />
+              <div className="absolute inset-0 bg-gradient-to-l from-slate-950/70 via-slate-900/15 to-transparent" />
             </div>
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 };
 

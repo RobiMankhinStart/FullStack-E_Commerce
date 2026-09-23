@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -30,45 +30,72 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
 
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
 
-  // Form states
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "",
-    price: "",
-    discountPercentage: 0,
-    isActive: true,
-  });
+  const rawCategories =
+    categoryData?.data?.categories || categoryData?.data || [];
 
-  const [variants, setVariants] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
+  if (isProductLoading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  if (productError || !productData?.data) {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
+        <p className="font-semibold">Failed to load product details.</p>
+        <Link
+          href="/admin/products"
+          className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline"
+        >
+          <ArrowLeft size={16} /> Back to Products
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <ProductEditorForm
+      key={productData.data?._id || slug}
+      product={productData.data}
+      categories={rawCategories}
+      slug={slug}
+      router={router}
+      updateProduct={updateProduct}
+      isUpdating={isUpdating}
+    />
+  );
+}
+
+function ProductEditorForm({
+  product,
+  categories,
+  slug,
+  router,
+  updateProduct,
+  isUpdating,
+}) {
+  const [formData, setFormData] = useState(() => ({
+    title: product?.title || "",
+    description: product?.description || "",
+    category: product?.category?._id || product?.category || "",
+    price: product?.price || "",
+    discountPercentage: product?.discountPercentage || 0,
+    isActive: product?.isActive ?? true,
+  }));
+
+  const [variants, setVariants] = useState(() => product?.variants || []);
+  const [existingImages, setExistingImages] = useState(
+    () => product?.images || [],
+  );
   const [deleteImgUrls, setDeleteImgUrls] = useState([]);
 
-  // File uploads state
   const [newThumbnail, setNewThumbnail] = useState(null);
   const [newThumbnailPreview, setNewThumbnailPreview] = useState("");
   const [newImages, setNewImages] = useState([]);
   const [newImagesPreviews, setNewImagesPreviews] = useState([]);
 
-  // Populate data on load
-  useEffect(() => {
-    if (productData?.data) {
-      const prod = productData.data;
-      setFormData({
-        title: prod.title || "",
-        description: prod.description || "",
-        category: prod.category?._id || prod.category || "",
-        price: prod.price || "",
-        discountPercentage: prod.discountPercentage || 0,
-        isActive: prod.isActive ?? true,
-      });
-
-      setVariants(prod.variants || []);
-      setExistingImages(prod.images || []);
-    }
-  }, [productData]);
-
-  // Form input change handler
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -77,7 +104,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
     }));
   };
 
-  // Dynamic Variant handlers (Auto SKU appended)
   const handleAddVariant = () => {
     setVariants((prev) => [
       ...prev,
@@ -102,7 +128,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
     setVariants((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Thumbnail upload change
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -111,7 +136,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
     }
   };
 
-  // Gallery images change
   const handleNewImagesChange = (e) => {
     const files = Array.from(e.target.files);
     const totalRemainingExisting = existingImages.length - deleteImgUrls.length;
@@ -132,7 +156,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
     setNewImagesPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Mark existing gallery image for deletion
   const toggleMarkDeleteExistingImage = (url) => {
     if (deleteImgUrls.includes(url)) {
       setDeleteImgUrls((prev) => prev.filter((item) => item !== url));
@@ -141,7 +164,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
     }
   };
 
-  // Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -177,7 +199,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
       return;
     }
 
-    // Build FormData
     const payload = new FormData();
     payload.append("title", formData.title);
     payload.append("description", formData.description);
@@ -186,15 +207,12 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
     payload.append("discountPercentage", formData.discountPercentage);
     payload.append("isActive", formData.isActive);
 
-    // Variants JSON
     payload.append("variants", JSON.stringify(variants));
 
-    // Delete image URLs array
     if (deleteImgUrls.length > 0) {
       payload.append("deleteImgUrls", JSON.stringify(deleteImgUrls));
     }
 
-    // Files
     if (newThumbnail) {
       payload.append("thumbnail", newThumbnail);
     }
@@ -205,8 +223,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
 
     try {
       const res = await updateProduct({ slug, formData: payload }).unwrap();
-
-      // Success toast from backend
       toast.success(res?.message || "Product updated successfully!");
 
       setTimeout(() => {
@@ -214,42 +230,14 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
       }, 1500);
     } catch (err) {
       console.error("Update error:", err);
-
-      // Error toast from backend
       toast.error(
         err?.data?.message || err?.message || "Failed to update product.",
       );
     }
   };
 
-  if (isProductLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
-
-  if (productError || !productData?.data) {
-    return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
-        <p className="font-semibold">Failed to load product details.</p>
-        <Link
-          href="/admin/products"
-          className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline"
-        >
-          <ArrowLeft size={16} /> Back to Products
-        </Link>
-      </div>
-    );
-  }
-
-  const rawCategories =
-    categoryData?.data?.categories || categoryData?.data || [];
-
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
-      {/* Header Bar */}
       <div className="flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Link
@@ -263,7 +251,7 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
               Product Editor
             </p>
             <h1 className="text-2xl font-bold text-slate-900">
-              {productData.data.title}
+              {product.title}
             </h1>
           </div>
         </div>
@@ -281,12 +269,9 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
         </div>
       </div>
 
-      {/* Edit Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main Info Section */}
           <div className="space-y-6 lg:col-span-2">
-            {/* General Info Card */}
             <div className="space-y-4 rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-slate-900">
                 Basic Information
@@ -333,7 +318,7 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
                     className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                   >
                     <option value="">Select Category</option>
-                    {rawCategories.map((cat) => (
+                    {categories.map((cat) => (
                       <option key={cat._id} value={cat._id}>
                         {cat.name}
                       </option>
@@ -358,7 +343,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
               </div>
             </div>
 
-            {/* Pricing Section */}
             <div className="space-y-4 rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-slate-900">Pricing</h2>
 
@@ -396,7 +380,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
               </div>
             </div>
 
-            {/* Dynamic Variants Section */}
             <div className="space-y-4 rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
@@ -506,18 +489,16 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
             </div>
           </div>
 
-          {/* Media Section */}
           <div className="space-y-6">
-            {/* Thumbnail Card */}
             <div className="space-y-4 rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-slate-900">
                 Thumbnail
               </h2>
 
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 h-48 w-full flex items-center justify-center">
-                {newThumbnailPreview || productData.data.thumbnail ? (
+                {newThumbnailPreview || product.thumbnail ? (
                   <Image
-                    src={newThumbnailPreview || productData.data.thumbnail}
+                    src={newThumbnailPreview || product.thumbnail}
                     alt="Thumbnail preview"
                     fill
                     unoptimized
@@ -539,7 +520,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
               </label>
             </div>
 
-            {/* Gallery Images Card */}
             <div className="space-y-4 rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-900">
@@ -548,7 +528,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
                 <span className="text-xs text-slate-400">Max 4 total</span>
               </div>
 
-              {/* Existing Images */}
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
                   Existing
@@ -589,7 +568,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
                 </div>
               </div>
 
-              {/* New Image Upload previews */}
               {newImagesPreviews.length > 0 && (
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-2">
@@ -621,7 +599,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
                 </div>
               )}
 
-              {/* Add New File Input */}
               <label className="block pt-2">
                 <span className="sr-only">Add gallery images</span>
                 <input
@@ -634,7 +611,6 @@ export default function AdminProductDetailPage({ params: paramsPromise }) {
               </label>
             </div>
 
-            {/* Save Action */}
             <button
               type="submit"
               disabled={isUpdating}
