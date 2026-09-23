@@ -28,14 +28,17 @@ export default function VerifyOtpPage() {
     setErrors({ emailError: "", otpError: "" });
 
     try {
-      const response = await fetch("http://localhost:8000/auth/verifyotp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email.trim(),
-          otp: formData.otp.trim(),
-        }),
-      });
+      const response = await fetch(
+        "https://full-stack-backend-e-commerce.vercel.app/auth/verifyotp",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email.trim(),
+            otp: formData.otp.trim(),
+          }),
+        },
+      );
 
       const data = await response.json().catch(() => ({}));
       const message = data.message || "Verification failed";

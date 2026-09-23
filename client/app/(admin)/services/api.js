@@ -2,7 +2,9 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: process.env.NEXT_PUBLIC_SERVER_API,
+  baseUrl:
+    process.env.NEXT_PUBLIC_SERVER_API ||
+    "https://full-stack-backend-e-commerce.vercel.app",
   credentials: "include",
 });
 

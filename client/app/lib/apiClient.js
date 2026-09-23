@@ -2,7 +2,7 @@ import next from "next";
 
 const baseUrl =
   process.env.NEXT_PUBLIC_SERVER_API ||
-  "https://full-stack-e-commerce-xilm-git-main-robis-projects-ad5eb63b.vercel.app";
+  "https://full-stack-backend-e-commerce.vercel.app";
 
 async function request(
   endpoint,
