@@ -28,7 +28,7 @@ app.use(
   cors({
     origin:
       process.env.CLIENT_URL ||
-      "https://full-stack-e-commerce-fawn-delta.vercel.app",
+      "https://full-stack-client-e-commerce.vercel.app",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "X-AS-Token"],
