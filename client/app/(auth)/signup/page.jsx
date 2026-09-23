@@ -14,6 +14,7 @@ import Input from "@/app/components/commonUI/Input";
 import AuthShell from "@/app/(auth)/components/AuthShell";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getApiBaseUrl } from "@/app/lib/apiClient";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -41,14 +42,12 @@ export default function SignUpPage() {
     });
 
     try {
-      const response = await fetch(
-        "https://full-stack-backend-e-commerce.vercel.app/auth/signup",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(userData),
-        },
-      );
+      const backendBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${backendBaseUrl}/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
 
       const data = await response.json().catch(() => ({}));
 

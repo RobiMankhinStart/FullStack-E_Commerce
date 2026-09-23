@@ -1,7 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getApiBaseUrl } from "@/app/lib/apiClient";
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: "https://full-stack-backend-e-commerce.vercel.app",
+  baseUrl: getApiBaseUrl(),
   credentials: "include",
 });
 

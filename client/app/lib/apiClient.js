@@ -1,6 +1,34 @@
-const baseUrl =
-  process.env.NEXT_PUBLIC_SERVER_API ||
-  "https://full-stack-backend-e-commerce.vercel.app";
+export const normalizeApiBaseUrl = (value) => {
+  if (!value) return value;
+
+  return value
+    .trim()
+    .replace(/https:\/(?!\/)/i, "https://")
+    .replace(/http:\/(?!\/)/i, "http://")
+    .replace(/\/+$/, "");
+};
+
+export const getApiBaseUrl = () => {
+  const fromEnv = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_SERVER_API);
+
+  if (fromEnv) {
+    return fromEnv;
+  }
+
+  if (typeof window !== "undefined") {
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+
+    return isLocalhost
+      ? "http://localhost:8000"
+      : "https://full-stack-backend-e-commerce.vercel.app";
+  }
+
+  return "https://full-stack-backend-e-commerce.vercel.app";
+};
+
+const baseUrl = getApiBaseUrl();
 
 const REQUEST_TIMEOUT_MS = Number(
   process.env.NEXT_PUBLIC_API_TIMEOUT_MS || 8000,

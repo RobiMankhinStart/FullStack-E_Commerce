@@ -7,6 +7,7 @@ import Input from "@/app/components/commonUI/Input";
 import AuthShell from "@/app/(auth)/components/AuthShell";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getApiBaseUrl } from "@/app/lib/apiClient";
 
 export default function VerifyOtpPage() {
   const router = useRouter();
@@ -28,17 +29,15 @@ export default function VerifyOtpPage() {
     setErrors({ emailError: "", otpError: "" });
 
     try {
-      const response = await fetch(
-        "https://full-stack-backend-e-commerce.vercel.app/auth/verifyotp",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: formData.email.trim(),
-            otp: formData.otp.trim(),
-          }),
-        },
-      );
+      const backendBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${backendBaseUrl}/auth/verifyotp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email.trim(),
+          otp: formData.otp.trim(),
+        }),
+      });
 
       const data = await response.json().catch(() => ({}));
       const message = data.message || "Verification failed";
@@ -75,9 +74,7 @@ export default function VerifyOtpPage() {
       return;
     }
 
-    const backendBaseUrl =
-      process.env.NEXT_PUBLIC_SERVER_API ||
-      "https://full-stack-backend-e-commerce.vercel.app";
+    const backendBaseUrl = getApiBaseUrl();
 
     setResending(true);
     try {
