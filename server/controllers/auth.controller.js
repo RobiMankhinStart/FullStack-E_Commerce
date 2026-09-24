@@ -208,7 +208,8 @@ const forgetPassword = async (req, res) => {
 
     const { plainResetToken, hashedToken } = generateResetPassToken();
     const resetPassLink = `${
-      process.env.CLIENT_URL || "http://localhost:3000"
+      process.env.CLIENT_URL ||
+      "https://full-stack-client-e-commerce.vercel.app"
     }/auth/resetpass/${plainResetToken}`;
 
     // saving into the Database

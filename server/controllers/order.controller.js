@@ -111,7 +111,9 @@ const checkOut = async (req, res) => {
     });
 
     const baseUrl =
-      process.env.CLIENT_URL || req.headers.origin || "http://localhost:3000";
+      process.env.CLIENT_URL ||
+      req.headers.origin ||
+      "https://full-stack-client-e-commerce.vercel.app";
 
     // handling order payment based on payment type
     if (normalizedPayment === "cash") {
