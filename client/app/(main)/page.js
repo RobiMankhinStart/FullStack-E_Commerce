@@ -52,7 +52,8 @@ const HomePage = async () => {
       image: "/coverpic5.jpg",
       accent: "from-rose-500/30 to-orange-500/20",
       badge: "New in",
-      layout: "lg:col-span-2 lg:row-span-2 min-h-[500px]",
+      layout:
+        "md:row-span-2 lg:col-span-2 lg:row-span-2 min-h-[280px] md:min-h-[380px] lg:min-h-[500px]",
     },
     {
       title: "City Layers",
@@ -60,7 +61,7 @@ const HomePage = async () => {
       image: "/coverpic2.jpg",
       accent: "from-indigo-500/30 to-sky-500/20",
       badge: "Street edit",
-      layout: "min-h-[240px]",
+      layout: "min-h-[220px] md:min-h-[260px]",
     },
     {
       title: "Weekend Uniform",
@@ -68,7 +69,7 @@ const HomePage = async () => {
       image: "/coverpic4.jfif",
       accent: "from-emerald-500/30 to-teal-500/20",
       badge: "Easy wear",
-      layout: "min-h-[240px]",
+      layout: "min-h-[220px] md:min-h-[260px]",
     },
     {
       title: "New Neutrals",
@@ -76,7 +77,8 @@ const HomePage = async () => {
       image: "/coverpic1.avif",
       accent: "from-slate-800/50 to-slate-500/15",
       badge: "Warm tones",
-      layout: "lg:col-span-2 min-h-[260px]",
+      layout:
+        "md:col-span-2 lg:col-span-2 min-h-[220px] md:min-h-[260px] lg:min-h-[300px]",
     },
   ];
 
@@ -186,12 +188,12 @@ const HomePage = async () => {
             can wear from morning coffee to late-night plans.
           </p>
         </div>
-
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4 auto-rows-[260px]">
+        {/* editorialCards section  */}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:auto-rows-[280px] xl:grid-cols-4 xl:auto-rows-[260px]">
           {editorialCards.map((card) => (
             <div
               key={card.title}
-              className={`group relative overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm ${card.layout}`}
+              className={`group relative h-full overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm ${card.layout}`}
             >
               <div className="absolute inset-0">
                 <Image
@@ -205,14 +207,14 @@ const HomePage = async () => {
                 />
               </div>
 
-              <div className="relative z-10 flex h-full flex-col justify-end p-6 md:p-8">
-                <span className="mb-3 inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24rem] text-white backdrop-blur-sm">
+              <div className="relative z-10 flex h-full flex-col justify-end gap-2 p-6 md:p-8">
+                <span className="inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24rem] text-white backdrop-blur-sm">
                   {card.badge}
                 </span>
-                <h3 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+                <h3 className="max-w-[12rem] text-xl font-black tracking-tight text-white sm:text-2xl md:text-3xl">
                   {card.title}
                 </h3>
-                <p className="mt-2 max-w-xs text-sm text-slate-100">
+                <p className="max-w-[14rem] text-xs leading-relaxed text-slate-100 sm:text-sm">
                   {card.subtitle}
                 </p>
               </div>
