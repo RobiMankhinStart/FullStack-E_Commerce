@@ -6,6 +6,7 @@ const {
   getOrderById,
   getAllOrdersForAdmin,
   updateOrderStatus,
+  getDashboardStats,
 } = require("../controllers/order.controller");
 const { antiAdminMiddleware } = require("../middleware/antiAdminMiddleware");
 const roleCheckMiddleware = require("../middleware/roleCheckMiddleware");
@@ -16,6 +17,12 @@ route.get(
   "/orderlist",
   roleCheckMiddleware("admin", "editor"),
   getAllOrdersForAdmin,
+);
+
+route.get(
+  "/dashboard-stats",
+  roleCheckMiddleware("admin", "editor"),
+  getDashboardStats,
 );
 
 // Admin / Editor status update

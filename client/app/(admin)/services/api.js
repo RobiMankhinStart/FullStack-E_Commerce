@@ -10,7 +10,19 @@ const baseQuery = fetchBaseQuery({
 // getting access token again using refresh token
 const baseQueryWithAuth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
+
   if (result.error && result.error.status === 401) {
+    const hasRefreshToken =
+      typeof document !== "undefined" &&
+      document.cookie.split(";").some((cookie) => {
+        const [name] = cookie.trim().split("=");
+        return name === "X-RF-Token";
+      });
+
+    if (!hasRefreshToken) {
+      return result;
+    }
+
     const refreshResult = await baseQuery(
       {
         url: "/auth/refreshaccesstoken",
@@ -21,16 +33,19 @@ const baseQueryWithAuth = async (args, api, extraOptions) => {
     );
 
     if (refreshResult.data) {
-      // Retry original request with the new cookie/token
       result = await baseQuery(args, api, extraOptions);
+      return result;
     }
+
+    return refreshResult;
   }
+
   return result;
 };
 
 export const adminApi = createApi({
   baseQuery: baseQueryWithAuth,
-  tagTypes: ["product", "category", "orders"],
+  tagTypes: ["product", "category", "orders", "auth", "users"],
   endpoints: (build) => ({
     getProductList: build.query({
       query: () => ({
@@ -39,6 +54,15 @@ export const adminApi = createApi({
       }),
       providesTags: ["product"],
     }),
+
+    getAdminProfile: build.query({
+      query: () => ({
+        url: "/auth/profile",
+        // method:"GET"
+      }),
+      providesTags: ["auth"],
+    }),
+
     getCategoryList: build.query({
       query: () => ({
         url: "/category/all",
@@ -46,6 +70,7 @@ export const adminApi = createApi({
       }),
       providesTags: ["category"],
     }),
+
     createNewProduct: build.mutation({
       query: (productData) => ({
         url: "/product/createproduct",
@@ -55,6 +80,7 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["product"],
     }),
+
     getProductDetails: build.query({
       query: (slug) => ({
         url: `/product/${slug}`,
@@ -97,6 +123,46 @@ export const adminApi = createApi({
       providesTags: ["orders"],
     }),
 
+    getDashboardStats: build.query({
+      query: () => ({
+        url: "/order/dashboard-stats",
+        method: "GET",
+      }),
+      providesTags: ["orders"],
+    }),
+
+    // USER MANAGEMENT ENDPOINTS MATCHING YOUR BACKEND
+    getAllUsersForAdmin: build.query({
+      query: ({ page = 1, limit = 10, role = "", search = "" } = {}) => {
+        const params = new URLSearchParams({ page, limit });
+        if (role) params.append("role", role);
+        if (search) params.append("search", search);
+        return {
+          url: `/auth/userlist?${params.toString()}`,
+          method: "GET",
+        };
+      },
+      providesTags: ["users"],
+    }),
+
+    updateUserRole: build.mutation({
+      query: ({ userId, role }) => ({
+        url: `/auth/updaterole/${userId}`,
+        method: "PATCH",
+        body: { role },
+      }),
+      invalidatesTags: ["users"],
+    }),
+
+    updateProfile: build.mutation({
+      query: (formData) => ({
+        url: "/auth/updateprofile",
+        method: "PUT",
+        body: formData,
+      }),
+      invalidatesTags: ["auth"],
+    }),
+
     // MUTATION FOR STATUS UPDATE
     updateOrderStatus: build.mutation({
       query: ({ orderId, status }) => ({
@@ -115,9 +181,14 @@ export const adminApi = createApi({
 });
 export const {
   useGetProductListQuery,
+  useGetAdminProfileQuery,
   useGetCategoryListQuery,
   useGetProductDetailsQuery,
   useGetAllOrdersForAdminQuery,
+  useGetDashboardStatsQuery,
+  useGetAllUsersForAdminQuery,
+  useUpdateUserRoleMutation,
+  useUpdateProfileMutation,
   useCreateNewProductMutation,
   useUpdateProductMutation,
   useSignoutMutation,

@@ -12,8 +12,11 @@ const {
   updateProfile,
   refreshAccessToken,
   signOut,
+  getAllUsersForAdmin,
+  updateUserRole,
 } = require("../controllers/auth.controller");
 const { authMiddleware } = require("../middleware/authMiddleware");
+const roleCheckMiddleware = require("../middleware/roleCheckMiddleware");
 const route = express.Router();
 
 route.post("/signup", signUp);
@@ -31,5 +34,18 @@ route.put(
 );
 route.post("/refreshaccesstoken", refreshAccessToken);
 route.post("/signout", signOut);
+
+route.get(
+  "/userlist",
+  authMiddleware,
+  roleCheckMiddleware("admin"),
+  getAllUsersForAdmin,
+);
+route.patch(
+  "/updaterole/:userId",
+  authMiddleware,
+  roleCheckMiddleware("admin"),
+  updateUserRole,
+);
 
 module.exports = route;

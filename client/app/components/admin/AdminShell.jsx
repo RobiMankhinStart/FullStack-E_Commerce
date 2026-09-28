@@ -18,7 +18,7 @@ import {
   FiUsers,
   FiX,
 } from "react-icons/fi";
-import { MOCK_ADMIN_PROFILE } from "@/app/lib/mockData";
+import { useGetAdminProfileQuery } from "@/app/(admin)/services/api";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: FiHome },
@@ -31,6 +31,9 @@ const navItems = [
 ];
 
 export default function AdminShell({ children }) {
+  const { data: admin, isLoading, error } = useGetAdminProfileQuery();
+  console.log("AdminData fromShell: ", admin?.data);
+
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -84,25 +87,26 @@ export default function AdminShell({ children }) {
             </div>
 
             <div
-              className={`mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 ${sidebarCollapsed ? "px-3" : ""}`}
+              className={`mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-2 ${sidebarCollapsed ? "px-3" : ""}`}
             >
               <div
-                className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}
+                className={` flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}
               >
                 <Image
-                  src={MOCK_ADMIN_PROFILE.avatar}
-                  alt={MOCK_ADMIN_PROFILE.name}
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 rounded-full object-cover"
+                  src={admin?.data?.avatar}
+                  alt="user-avator"
+                  width={42}
+                  height={42}
+                  className="h-16 w-16 rounded-full object-cover"
                 />
+
                 {!sidebarCollapsed ? (
                   <div>
                     <p className="font-semibold text-slate-900">
-                      {MOCK_ADMIN_PROFILE.name}
+                      {admin?.data?.fullname}
                     </p>
-                    <p className="text-sm text-slate-500">
-                      {MOCK_ADMIN_PROFILE.role}
+                    <p className="text-sm capitalize text-slate-500">
+                      {admin?.data?.role}
                     </p>
                   </div>
                 ) : null}

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const cartSchema = require("../models/cartSchema");
 const orderSchema = require("../models/orderSchema");
 const productSchema = require("../models/productSchema");
+const userSchema = require("../models/userSchema");
 const sendResponse = require("../services/sendResponse");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -382,10 +383,36 @@ const updateOrderStatus = async (req, res) => {
     });
   }
 };
+
+const getDashboardStats = async (req, res) => {
+  try {
+    const [salesStats, totalOrders, totalCustomers] = await Promise.all([
+      orderSchema.aggregate([
+        { $match: { "payment.status": "paid" } },
+        { $group: { _id: null, totalSales: { $sum: "$totalPrice" } } },
+      ]),
+      orderSchema.countDocuments(),
+      userSchema.countDocuments({ role: "user" }),
+    ]);
+
+    const totalSales = salesStats[0]?.totalSales || 0;
+
+    return sendResponse(res, 200, "Dashboard stats fetched successfully", {
+      totalSales,
+      totalOrders,
+      totalCustomers,
+    });
+  } catch (error) {
+    console.error("getDashboardStats Error:", error);
+    return sendResponse(res, 500, "Internal server error");
+  }
+};
+
 module.exports = {
   checkOut,
   getMyOrders,
   getOrderById,
   getAllOrdersForAdmin,
   updateOrderStatus,
+  getDashboardStats,
 };

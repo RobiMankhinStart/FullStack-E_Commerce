@@ -334,11 +334,11 @@ const refreshAccessToken = async (req, res) => {
         : null);
 
     if (!refreshToken) {
-      return sendResponse(res, 400, "Refresh token missing");
+      return sendResponse(res, 401, "Refresh token missing or expired");
     }
 
     const decoded = verifyToken(refreshToken);
-    if (!decoded) return sendResponse(res, 400, "unauthorized request");
+    if (!decoded) return sendResponse(res, 401, "Unauthorized request");
 
     const accessToken = generateAccTok(decoded);
     const cookieOptions = getCookieOptions(req);
@@ -368,6 +368,158 @@ const signOut = async (req, res) => {
     return sendResponse(res, 500, "Internal server error");
   }
 };
+
+// Controller to Fetch All Users for Admin
+const getAllUsersForAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, role, search } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.max(1, parseInt(limit, 10) || 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build dynamic filter query
+    const query = {};
+
+    if (role && ["admin", "user", "editor"].includes(role)) {
+      query.role = role;
+    }
+
+    if (search && search.trim() !== "") {
+      const searchRegex = { $regex: search.trim(), $options: "i" };
+      query.$or = [
+        { fullname: searchRegex },
+        { email: searchRegex },
+        { phone: searchRegex },
+      ];
+    }
+
+    // Execute query with pagination
+    const [users, totalUsers] = await Promise.all([
+      userSchema
+        .find(query)
+        .select("-password -otp -resetPassToken -passTokenExpires")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      userSchema.countDocuments(query),
+    ]);
+
+    // Calculate Global Summary Statistics using MongoDB Aggregation
+    const summaryData = await userSchema.aggregate([
+      {
+        $facet: {
+          roleCounts: [
+            {
+              $group: {
+                _id: "$role",
+                count: { $sum: 1 },
+              },
+            },
+          ],
+          verifiedCounts: [
+            {
+              $group: {
+                _id: "$isVerified",
+                count: { $sum: 1 },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    const roleMap = (summaryData[0]?.roleCounts || []).reduce((acc, curr) => {
+      acc[curr._id] = curr.count;
+      return acc;
+    }, {});
+
+    const verifiedMap = (summaryData[0]?.verifiedCounts || []).reduce(
+      (acc, curr) => {
+        acc[curr._id ? "verified" : "unverified"] = curr.count;
+        return acc;
+      },
+      {},
+    );
+
+    const summary = {
+      totalUsers,
+      adminCount: roleMap["admin"] || 0,
+      editorCount: roleMap["editor"] || 0,
+      userCount: roleMap["user"] || 0,
+      verifiedCount: verifiedMap["verified"] || 0,
+      unverifiedCount: verifiedMap["unverified"] || 0,
+    };
+
+    const totalPages = Math.ceil(totalUsers / limitNum) || 1;
+    const pagination = {
+      totalUsers,
+      currentPage: pageNum,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1,
+    };
+
+    return sendResponse(res, 200, "Users fetched successfully", {
+      users,
+      summary,
+      pagination,
+    });
+  } catch (error) {
+    console.error("getAllUsersForAdmin Error:", error);
+    return sendResponse(res, 500, "Internal server error");
+  }
+};
+
+// Controller to Update User Role by Admin
+const updateUserRole = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+
+    const allowedRoles = ["admin", "user", "editor"];
+    if (!role || !allowedRoles.includes(role)) {
+      return sendResponse(
+        res,
+        400,
+        "Invalid role. Must be one of: admin, editor, user",
+      );
+    }
+
+    const targetUser = await userSchema.findById(userId);
+    if (!targetUser) {
+      return sendResponse(res, 404, "User not found");
+    }
+
+    // STRICT BUSINESS RULE:
+    // Once a user is an admin, no admin can demote them to user or editor
+    if (targetUser.role === "admin" && role !== "admin") {
+      return sendResponse(
+        res,
+        403,
+        "Action forbidden: Existing Admin accounts cannot be demoted to user or editor.",
+      );
+    }
+
+    targetUser.role = role;
+    await targetUser.save();
+
+    const updatedUser = targetUser.toObject();
+    delete updatedUser.password;
+    delete updatedUser.otp;
+
+    return sendResponse(
+      res,
+      200,
+      `User role updated to ${role} successfully`,
+      updatedUser,
+    );
+  } catch (error) {
+    console.error("updateUserRole Error:", error);
+    return sendResponse(res, 500, "Internal server error");
+  }
+};
 module.exports = {
   signUp,
   verifyOtp,
@@ -379,4 +531,6 @@ module.exports = {
   updateProfile,
   refreshAccessToken,
   signOut,
+  getAllUsersForAdmin,
+  updateUserRole,
 };

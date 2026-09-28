@@ -17,40 +17,86 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import Button from "@/app/components/commonUI/Button";
-import { MOCK_ORDERS, MOCK_REVENUE_DATA } from "@/app/lib/mockData";
+import { MOCK_REVENUE_DATA } from "@/app/lib/mockData";
+import {
+  useGetAllOrdersForAdminQuery,
+  useGetDashboardStatsQuery,
+} from "../../services/api";
 
-const kpiCards = [
-  {
-    label: "Revenue",
-    value: "$84,240",
-    trend: "+12.5%",
-    icon: FiDollarSign,
-    accent: "indigo",
-  },
-  {
-    label: "Customers",
-    value: "1,208",
-    trend: "+8.2%",
-    icon: FiUsers,
-    accent: "sky",
-  },
-  {
-    label: "Orders",
-    value: "342",
-    trend: "+15.1%",
-    icon: FiShoppingCart,
-    accent: "emerald",
-  },
-  {
-    label: "Stock Alerts",
-    value: "24",
-    trend: "-2.0%",
-    icon: FiPackage,
-    accent: "amber",
-  },
-];
+const formatNumber = (value) =>
+  new Intl.NumberFormat("en-US").format(Number(value || 0));
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "BDT",
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
 
 export default function DashboardPage() {
+  const {
+    data: dashboardStats,
+    isLoading,
+    isError,
+  } = useGetDashboardStatsQuery();
+
+  const {
+    data: ordersData,
+    isLoading: isOrdersLoading,
+    isError: isOrdersError,
+  } = useGetAllOrdersForAdminQuery({
+    page: 1,
+    limit: 10,
+    status: "",
+    search: "",
+  });
+
+  const stats = dashboardStats?.data || {};
+  const recentOrders = ordersData?.data?.orders?.slice(0, 5) || [];
+
+  const kpiCards = [
+    {
+      label: "Total Sales",
+      value: isLoading
+        ? "Loading..."
+        : isError
+          ? "--"
+          : formatCurrency(stats.totalSales),
+      trend: "+12.5%",
+      icon: FiDollarSign,
+      accent: "indigo",
+    },
+    {
+      label: "Customers",
+      value: isLoading
+        ? "Loading..."
+        : isError
+          ? "--"
+          : formatNumber(stats.totalCustomers),
+      trend: "+8.2%",
+      icon: FiUsers,
+      accent: "sky",
+    },
+    {
+      label: "Orders",
+      value: isLoading
+        ? "Loading..."
+        : isError
+          ? "--"
+          : formatNumber(stats.totalOrders),
+      trend: "+15.1%",
+      icon: FiShoppingCart,
+      accent: "emerald",
+    },
+    {
+      label: "Stock Alerts",
+      value: "24",
+      trend: "-2.0%",
+      icon: FiPackage,
+      accent: "amber",
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
@@ -184,40 +230,58 @@ export default function DashboardPage() {
               Recent customer activity
             </h3>
           </div>
-          <Button variant="outline" size="sm">
+          <Button as="a" href="/admin/orders" variant="outline" size="sm">
             View all
           </Button>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="text-slate-500">
-              <tr>
-                <th className="px-3 py-3">Order</th>
-                <th className="px-3 py-3">Customer</th>
-                <th className="px-3 py-3">Amount</th>
-                <th className="px-3 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_ORDERS.slice(0, 5).map((order) => (
-                <tr
-                  key={order.id}
-                  className="border-t border-slate-200 text-slate-600"
-                >
-                  <td className="px-3 py-3 font-medium text-slate-900">
-                    {order.id}
-                  </td>
-                  <td className="px-3 py-3">{order.customer}</td>
-                  <td className="px-3 py-3">${order.total}</td>
-                  <td className="px-3 py-3">
-                    <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs uppercase tracking-[0.2em] text-indigo-700">
-                      {order.status}
-                    </span>
-                  </td>
+          {isOrdersLoading ? (
+            <div className="flex min-h-[160px] items-center justify-center text-sm text-slate-500">
+              Loading recent orders...
+            </div>
+          ) : isOrdersError ? (
+            <div className="flex min-h-[160px] items-center justify-center text-sm text-rose-600">
+              Failed to load recent orders.
+            </div>
+          ) : recentOrders.length === 0 ? (
+            <div className="flex min-h-[160px] items-center justify-center text-sm text-slate-500">
+              No recent orders available.
+            </div>
+          ) : (
+            <table className="min-w-full text-left text-sm">
+              <thead className="text-slate-500">
+                <tr>
+                  <th className="px-3 py-3">Order</th>
+                  <th className="px-3 py-3">Customer</th>
+                  <th className="px-3 py-3">Amount</th>
+                  <th className="px-3 py-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recentOrders.map((order) => (
+                  <tr
+                    key={order._id}
+                    className="border-t border-slate-200 text-slate-600"
+                  >
+                    <td className="px-3 py-3 font-medium text-slate-900">
+                      {order.orderNumber || `#${order._id.slice(-6)}`}
+                    </td>
+                    <td className="px-3 py-3">
+                      {order.user?.name || "Guest Customer"}
+                    </td>
+                    <td className="px-3 py-3">
+                      ৳{Number(order.totalPrice || 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs uppercase tracking-[0.2em] text-indigo-700">
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
