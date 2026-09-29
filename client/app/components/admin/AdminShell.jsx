@@ -64,7 +64,7 @@ export default function AdminShell({ children }) {
             <div className="mb-6 flex items-center justify-between rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3">
               <div className={`${sidebarCollapsed ? "hidden" : "block"}`}>
                 <p className="text-[11px] uppercase tracking-[0.3em] text-indigo-600">
-                  Commerce Hub
+                  Royal Cart
                 </p>
                 <h2 className="text-lg font-semibold text-slate-900">
                   Admin Console

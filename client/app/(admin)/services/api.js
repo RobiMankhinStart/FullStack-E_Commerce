@@ -71,6 +71,14 @@ export const adminApi = createApi({
       providesTags: ["category"],
     }),
 
+    getProductDetails: build.query({
+      query: (slug) => ({
+        url: `/product/${slug}`,
+        method: "GET",
+      }),
+      providesTags: (result, error, slug) => [{ type: "product", id: slug }],
+    }),
+
     createNewProduct: build.mutation({
       query: (productData) => ({
         url: "/product/createproduct",
@@ -81,12 +89,14 @@ export const adminApi = createApi({
       invalidatesTags: ["product"],
     }),
 
-    getProductDetails: build.query({
-      query: (slug) => ({
-        url: `/product/${slug}`,
-        method: "GET",
+    createNewCategory: build.mutation({
+      query: (categoryData) => ({
+        url: "/category/create",
+        method: "POST",
+        // headers: { "Content-Type": "multipart/form-data" },
+        body: categoryData,
       }),
-      providesTags: (result, error, slug) => [{ type: "product", id: slug }],
+      invalidatesTags: ["category"],
     }),
 
     // 2. Updating existing product
@@ -188,6 +198,7 @@ export const {
   useGetDashboardStatsQuery,
   useGetAllUsersForAdminQuery,
   useUpdateUserRoleMutation,
+  useCreateNewCategoryMutation,
   useUpdateProfileMutation,
   useCreateNewProductMutation,
   useUpdateProductMutation,

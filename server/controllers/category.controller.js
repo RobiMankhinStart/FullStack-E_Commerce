@@ -10,8 +10,7 @@ const createCategory = async (req, res) => {
     const thumbnail = req.file;
     if (!name) return sendResponse(res, 404, "Category name is required");
     if (!slug) return sendResponse(res, 404, "Slug is required");
-    if (!thumbnail)
-      return sendResponse(res, 404, "Category Thumbnail is required");
+    if (!thumbnail) return sendResponse(res, 404, "Thumbnail is required");
 
     const exsitingSlug = await categorySchema.findOne({ slug });
     if (exsitingSlug)
