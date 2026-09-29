@@ -31,12 +31,15 @@ const navItems = [
 ];
 
 export default function AdminShell({ children }) {
-  const { data: admin, isLoading, error } = useGetAdminProfileQuery();
-  console.log("AdminData fromShell: ", admin?.data);
-
+  const { data: admin, isLoading } = useGetAdminProfileQuery();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Safely extract avatar URL and full name
+  const avatarUrl = admin?.data?.avatar?.trim();
+  const fullName = admin?.data?.fullname || "Admin";
+  const userInitial = fullName.charAt(0).toUpperCase();
 
   const toggleSidebar = () => {
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
@@ -90,23 +93,30 @@ export default function AdminShell({ children }) {
               className={`mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-2 ${sidebarCollapsed ? "px-3" : ""}`}
             >
               <div
-                className={` flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}
+                className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}
               >
-                <Image
-                  src={admin?.data?.avatar}
-                  alt="user-avator"
-                  width={42}
-                  height={42}
-                  className="h-16 w-16 rounded-full object-cover"
-                />
+                {/* Safe Avatar Handling */}
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={fullName}
+                    width={42}
+                    height={42}
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white">
+                    {userInitial}
+                  </div>
+                )}
 
                 {!sidebarCollapsed ? (
-                  <div>
-                    <p className="font-semibold text-slate-900">
-                      {admin?.data?.fullname}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-slate-900">
+                      {isLoading ? "Loading..." : fullName}
                     </p>
-                    <p className="text-sm capitalize text-slate-500">
-                      {admin?.data?.role}
+                    <p className="truncate text-sm capitalize text-slate-500">
+                      {admin?.data?.role || "Administrator"}
                     </p>
                   </div>
                 ) : null}
